@@ -1,0 +1,16 @@
+{
+  "node": {
+    "00dc4fa1171c06b524fdb8ccbdd9e92807baf51f58": {
+      "workers": {
+        "app/page": {
+          "moduleId": "[project]/.next-internal/server/app/page/actions.js { ACTIONS_MODULE0 => \"[project]/node_modules/@clerk/nextjs/dist/esm/app-router/server-actions.js [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": false,
+          "codeHash": null
+        }
+      },
+      "exportedName": "invalidateCacheAction",
+      "filename": "node_modules/@clerk/nextjs/dist/esm/app-router/server-actions.js"
+    }
+  },
+  "edge": {}
+}
