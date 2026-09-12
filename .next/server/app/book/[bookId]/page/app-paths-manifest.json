@@ -1,0 +1,3 @@
+{
+  "/book/[bookId]/page": "app/book/[bookId]/page.js"
+}

@@ -1,0 +1,3 @@
+{
+  "/read/[documentId]/page": "app/read/[documentId]/page.js"
+}

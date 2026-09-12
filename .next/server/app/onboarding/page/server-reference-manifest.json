@@ -1,0 +1,38 @@
+{
+  "node": {
+    "005f464124f6ec15bbfd221927868a13527c1c454c": {
+      "workers": {
+        "app/onboarding/page": {
+          "moduleId": 24815,
+          "async": false,
+          "codeHash": null
+        }
+      },
+      "exportedName": "invalidateCacheAction",
+      "filename": "node_modules/@clerk/nextjs/dist/esm/app-router/server-actions.js"
+    },
+    "7f7227f76a8683fcb85c7cf1f276a0f6649e2b001b": {
+      "workers": {
+        "app/onboarding/page": {
+          "moduleId": 24815,
+          "async": false,
+          "codeHash": null
+        }
+      },
+      "exportedName": "getOnboarding",
+      "filename": "src/lib/clerk.functions.ts"
+    },
+    "7f2014cefd8e7117769c3a49e767b3616feab65178": {
+      "workers": {
+        "app/onboarding/page": {
+          "moduleId": 24815,
+          "async": false,
+          "codeHash": null
+        }
+      },
+      "exportedName": "saveOnboarding",
+      "filename": "src/lib/clerk.functions.ts"
+    }
+  },
+  "edge": {}
+}
