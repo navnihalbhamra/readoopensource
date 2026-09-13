@@ -33,16 +33,16 @@ function Error({ error, reset }) {
                     children: "This page didn't load"
                 }, void 0, false, {
                     fileName: "[project]/app/error.tsx",
-                    lineNumber: 8,
-                    columnNumber: 130
+                    lineNumber: 17,
+                    columnNumber: 9
                 }, this),
                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
                     className: "mt-2 text-sm text-muted-foreground",
                     children: error.message || "Something went wrong on our end."
                 }, void 0, false, {
                     fileName: "[project]/app/error.tsx",
-                    lineNumber: 8,
-                    columnNumber: 213
+                    lineNumber: 18,
+                    columnNumber: 9
                 }, this),
                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
                     onClick: reset,
@@ -50,19 +50,19 @@ function Error({ error, reset }) {
                     children: "Try again"
                 }, void 0, false, {
                     fileName: "[project]/app/error.tsx",
-                    lineNumber: 8,
-                    columnNumber: 320
+                    lineNumber: 21,
+                    columnNumber: 9
                 }, this)
             ]
         }, void 0, true, {
             fileName: "[project]/app/error.tsx",
-            lineNumber: 8,
-            columnNumber: 92
+            lineNumber: 16,
+            columnNumber: 7
         }, this)
     }, void 0, false, {
         fileName: "[project]/app/error.tsx",
-        lineNumber: 8,
-        columnNumber: 10
+        lineNumber: 15,
+        columnNumber: 5
     }, this);
 }
 _s(Error, "OD7bBpZva5O2jO+Puf00hKivP7c=");

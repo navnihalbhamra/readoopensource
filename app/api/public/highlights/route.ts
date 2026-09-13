@@ -101,8 +101,7 @@ export async function POST(request: NextRequest) {
     skipped: rows.length - (inserted?.length ?? 0),
     limit_reached:
       entitlements.highlightLimit !== null &&
-      fresh.length <
-        rows.filter((r) => !seen.has(`${r.book_title}\u0000${r.text}`)).length,
+      fresh.length < rows.filter((r) => !seen.has(`${r.book_title}\u0000${r.text}`)).length,
     free_limit: entitlements.highlightLimit === null ? null : FREE_HIGHLIGHT_LIMIT,
   });
 }

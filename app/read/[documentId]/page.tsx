@@ -1,4 +1,14 @@
 "use client";
-import { Reader } from "@/routes/read.$documentId";
+import { useParams } from "next/navigation";
+
 import { RequireAuth } from "@/components/RequireAuth";
-export default function Page() { return <RequireAuth><Reader /></RequireAuth>; }
+import { Reader } from "@/routes/read.$documentId";
+
+export default function Page() {
+  const { documentId } = useParams<{ documentId: string }>();
+  return (
+    <RequireAuth>
+      <Reader documentId={documentId} />
+    </RequireAuth>
+  );
+}

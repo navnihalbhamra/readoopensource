@@ -1,36 +1,13 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import * as React from "react";
+import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useServerFn } from "@tanstack/react-start";
+import { useServerFn } from "@/lib/next-server-fn";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { AppShell } from "@/components/AppShell";
 import { RequireAuth } from "@/components/RequireAuth";
 import { useReaderPrefs } from "@/hooks/useReaderPrefs";
-import { getDocument, saveHighlight, saveProgress } from "@/lib/focus.functions";
-
-export const Route = createFileRoute("/read/$documentId")({
-  head: () => ({
-    meta: [
-      { title: "Reading — Reado" },
-      {
-        name: "description",
-        content:
-          "Distraction-free reader view with adjustable typography, three themes and instant highlighting.",
-      },
-      { property: "og:title", content: "Reading — Reado" },
-      {
-        property: "og:description",
-        content: "Read without clutter and save any passage as a highlight.",
-      },
-    ],
-  }),
-  component: () => (
-    <RequireAuth>
-      <Reader />
-    </RequireAuth>
-  ),
-});
 
 /** Split a paragraph so already-saved passages render with the ink wash. */
 function renderParagraph(text: string, saved: string[]) {
@@ -57,13 +34,12 @@ function renderParagraph(text: string, saved: string[]) {
   return parts;
 }
 
-function Reader() {
-  const { documentId } = Route.useParams();
+export function Reader({ documentId }: { documentId: string }) {
   const { prefs, update, toggleFocus } = useReaderPrefs();
   const queryClient = useQueryClient();
   const articleRef = useRef<HTMLElement>(null);
 
-  const fetchDoc = useServerFn(getDocument);
+  const fetchDoc = useServerFn("getDocument");
   const doc = useQuery({
     queryKey: ["document", documentId],
     queryFn: () => fetchDoc({ data: { id: documentId } }),
@@ -72,7 +48,7 @@ function Reader() {
   const [selection, setSelection] = useState<{ text: string; x: number; y: number } | null>(null);
 
   const save = useMutation({
-    mutationFn: useServerFn(saveHighlight),
+    mutationFn: useServerFn("saveHighlight"),
     onSuccess: () => {
       toast.success("Highlight saved");
       setSelection(null);
@@ -84,7 +60,7 @@ function Reader() {
     onError: (error: Error) => toast.error(error.message),
   });
 
-  const persistProgress = useServerFn(saveProgress);
+  const persistProgress = useServerFn("saveProgress");
 
   /* [ and ] toggle focus mode, matching the reader shortcut convention. */
   useEffect(() => {
@@ -164,7 +140,7 @@ function Reader() {
           <p className="text-[13px] text-destructive">
             {(doc.error as Error)?.message ?? "Document not found"}
           </p>
-          <Link to="/" className="chrome-btn mt-4">
+          <Link href="/" className="chrome-btn mt-4">
             Back to library
           </Link>
         </div>

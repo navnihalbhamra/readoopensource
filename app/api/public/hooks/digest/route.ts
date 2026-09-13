@@ -1,11 +1,7 @@
 /** POST /api/public/hooks/digest — scheduled review digest. */
 import { NextRequest, NextResponse } from "next/server";
 import { authenticateCronRequest } from "@/integrations/supabase/cron-auth";
-import {
-  pickDigestHighlights,
-  sendDigestEmail,
-  type DigestHighlight,
-} from "@/lib/digest.server";
+import { pickDigestHighlights, sendDigestEmail, type DigestHighlight } from "@/lib/digest.server";
 
 const BATCH_SIZE = 25;
 

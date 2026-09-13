@@ -142,7 +142,12 @@ const HEADER_ALIASES: Record<keyof ParsedHighlight, string[]> = {
 };
 
 function headerIndex(headers: string[], field: keyof ParsedHighlight): number {
-  const lower = headers.map((h) => h.toLowerCase().replace(/^\uFEFF/, "").trim());
+  const lower = headers.map((h) =>
+    h
+      .toLowerCase()
+      .replace(/^\uFEFF/, "")
+      .trim(),
+  );
   for (const alias of HEADER_ALIASES[field]) {
     const idx = lower.indexOf(alias);
     if (idx !== -1) return idx;
@@ -262,11 +267,11 @@ function looksLikeSeparateQuotes(lines: string[]): boolean {
   return selfContained >= Math.ceil(lines.length * 0.6);
 }
 
-
 /** Pick the right parser from the filename and the file's own shape. */
 export function parseHighlightFile(filename: string, contents: string): ParsedHighlight[] {
   const looksCsv = /\.csv$/i.test(filename) || /^[^\n]*,[^\n]*\n/.test(contents.slice(0, 400));
-  const looksKindle = /^=+\s*$/m.test(contents) || /-\s*Your (Highlight|Note|Bookmark)/i.test(contents);
+  const looksKindle =
+    /^=+\s*$/m.test(contents) || /-\s*Your (Highlight|Note|Bookmark)/i.test(contents);
 
   if (looksKindle) {
     const kindle = parseKindleClippings(contents);
@@ -279,7 +284,6 @@ export function parseHighlightFile(filename: string, contents: string): ParsedHi
   // Anything else — a quote someone pasted by hand — still becomes a highlight.
   return parsePlainText(contents);
 }
-
 
 /** Drop empties and same-text duplicates within one import batch. */
 export function dedupe(highlights: ParsedHighlight[]): ParsedHighlight[] {

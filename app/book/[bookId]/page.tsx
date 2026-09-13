@@ -1,4 +1,14 @@
 "use client";
-import { BookPage } from "@/routes/book.$bookId";
+import { useParams } from "next/navigation";
+
 import { RequireAuth } from "@/components/RequireAuth";
-export default function Page() { return <RequireAuth><BookPage /></RequireAuth>; }
+import { BookPage } from "@/routes/book.$bookId";
+
+export default function Page() {
+  const { bookId } = useParams<{ bookId: string }>();
+  return (
+    <RequireAuth>
+      <BookPage bookId={bookId} />
+    </RequireAuth>
+  );
+}

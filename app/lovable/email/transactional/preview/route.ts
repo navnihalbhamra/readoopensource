@@ -27,17 +27,37 @@ export async function POST(request: NextRequest) {
     const displayName = entry.displayName || name;
 
     if (!entry.previewData) {
-      results.push({ templateName: name, displayName, subject: "", html: "", status: "preview_data_required" });
+      results.push({
+        templateName: name,
+        displayName,
+        subject: "",
+        html: "",
+        status: "preview_data_required",
+      });
       continue;
     }
 
     try {
       const html = await render(React.createElement(entry.component, entry.previewData));
-      const resolvedSubject = typeof entry.subject === "function" ? entry.subject(entry.previewData) : entry.subject;
-      results.push({ templateName: name, displayName, subject: resolvedSubject, html, status: "ready" });
+      const resolvedSubject =
+        typeof entry.subject === "function" ? entry.subject(entry.previewData) : entry.subject;
+      results.push({
+        templateName: name,
+        displayName,
+        subject: resolvedSubject,
+        html,
+        status: "ready",
+      });
     } catch (err) {
       console.error("Failed to render template for preview", { template: name, error: err });
-      results.push({ templateName: name, displayName, subject: "", html: "", status: "render_failed", errorMessage: err instanceof Error ? err.message : String(err) });
+      results.push({
+        templateName: name,
+        displayName,
+        subject: "",
+        html: "",
+        status: "render_failed",
+        errorMessage: err instanceof Error ? err.message : String(err),
+      });
     }
   }
 

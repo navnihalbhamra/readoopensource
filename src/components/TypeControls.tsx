@@ -8,7 +8,6 @@ const THEMES: { id: ReaderTheme; label: string }[] = [
   { id: "light", label: "White" },
 ];
 
-
 interface Props {
   prefs: ReaderPrefs;
   update: (patch: Partial<ReaderPrefs>) => void;

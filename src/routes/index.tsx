@@ -1,9 +1,160 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import Link from "next/link";
 import logoAsset from "@/assets/reado-lockup.png.asset.json";
 import { Reveal } from "@/components/Reveal";
 import { useAuth } from "@/hooks/useAuth";
 
-export const Route = createFileRoute("/")({ head: () => ({ meta: [{ title: "Reado — remember every book you read" }, { name: "description", content: "Import your Kindle and book highlights, read distraction-free, and get a handful of your best passages back by email every day." }, { property: "og:title", content: "Reado — remember every book you read" }, { property: "og:description", content: "Import highlights, review five a day, and actually remember what you read. Black-and-white, no clutter." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary_large_image" }] }), component: Landing });
-const STEPS = [["01", "Import in seconds", "Drop in a Kindle My Clippings file, a CSV export, or just paste quotes. Reado splits them into clean, separate highlights."], ["02", "Books wire themselves up", "Every highlight is matched to its book — cover art, author and publication year found automatically."], ["03", "Review five a day", "A quiet daily review resurfaces a handful of passages, and an email digest brings them to your inbox on your schedule."]];
-const FEATURES = [["Distraction-free reader", "No sidebars, no badges. Adjustable type size, line height, measure and three reading themes."], ["Highlight anything", "Select text while reading and it's saved as a highlight, linked to the document forever."], ["Your own API", "A personal endpoint so other tools can push highlights into Reado programmatically."], ["Email digests", "Daily or weekly review emails, styled like the app — plain, typographic, calm."]];
-function Landing() { const { session, loading } = useAuth(); const primaryTo = session ? "/review" : "/auth"; const primaryLabel = session ? "Open your review" : "Start free"; return <div className="min-h-screen bg-background text-foreground"><header className="sticky top-0 z-20 border-b border-border bg-background/95 backdrop-blur"><div className="mx-auto flex h-14 max-w-5xl items-center justify-between gap-6 px-5"><Link to="/" className="flex shrink-0 items-center gap-2"><img src={logoAsset.url} alt="Reado" className="h-6 w-auto object-contain" /><span className="font-display text-lg font-semibold tracking-tight">Reado</span></Link><div className="flex items-center gap-2">{!loading && session ? <><Link to="/pricing" className="chrome-btn">Plans</Link><Link to="/review" className="brass-btn">Open Reado</Link></> : <><Link to="/pricing" className="chrome-btn">Plans</Link><Link to="/auth" className="chrome-btn">Sign in</Link><Link to="/auth" className="brass-btn">Start free</Link></>}</div></div></header><main><Reveal><section className="mx-auto max-w-3xl px-5 pb-16 pt-20 text-center"><p className="eyebrow">Highlights · Reader · Daily review</p><h1 className="mx-auto mt-5 max-w-2xl font-display text-4xl font-semibold leading-[1.05] tracking-tight text-balance sm:text-6xl">You read a lot. Remember it this time.</h1><p className="mx-auto mt-5 max-w-xl font-body text-lg leading-relaxed text-muted-foreground">Reado keeps every passage you highlight, files it under the right book, and hands a few of them back to you each day — in a black-and-white room with nothing else in it.</p><div className="mt-8 flex flex-wrap items-center justify-center gap-3"><Link to={primaryTo} className="brass-btn px-5 py-3 text-[13px]">{primaryLabel}</Link><Link to="/pricing" className="chrome-btn px-5 py-3 text-[13px]">View plans</Link></div><p className="mt-4 text-[11px] uppercase tracking-[0.16em] text-muted-foreground/80">Free to start · No credit card · Import in one click</p><figure className="mt-14 rounded-xl border border-border bg-surface/60 p-8 text-left"><blockquote className="font-body text-xl italic leading-relaxed text-foreground/90">“Attention is the rarest and purest form of generosity.”</blockquote><figcaption className="mt-4 border-t border-border/70 pt-3 text-[11px] uppercase tracking-[0.16em] text-muted-foreground">The Lantern Room · Marguerite Halloway · p. 88</figcaption></figure></section></Reveal><Reveal><section className="mx-auto max-w-5xl px-5 pb-20"><h2 className="font-display text-2xl font-semibold tracking-tight">How it works</h2><ol className="mt-6 grid gap-4 sm:grid-cols-3">{STEPS.map(([step, title, body]) => <li key={step} className="rounded-xl border border-border bg-surface/50 p-5"><p className="eyebrow">{step}</p><h3 className="mt-3 font-display text-base font-semibold tracking-tight">{title}</h3><p className="mt-2 font-body text-[14px] leading-relaxed text-muted-foreground">{body}</p></li>)}</ol></section></Reveal><Reveal><section className="mx-auto max-w-5xl px-5 pb-20"><h2 className="font-display text-2xl font-semibold tracking-tight">Everything, nothing more</h2><ul className="mt-6 grid gap-4 sm:grid-cols-2">{FEATURES.map(([title, body]) => <li key={title} className="rounded-xl border border-border p-5"><h3 className="font-display text-base font-semibold tracking-tight">{title}</h3><p className="mt-2 font-body text-[14px] leading-relaxed text-muted-foreground">{body}</p></li>)}</ul></section></Reveal></main><footer className="border-t border-border"><div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3 px-5 py-8 text-[11px] uppercase tracking-[0.16em] text-muted-foreground"><span>Reado</span><Link to="/pricing" className="hover:text-foreground">Plans</Link><Link to="/auth" className="hover:text-foreground">Sign in</Link></div></footer></div>; }
+const STEPS = [
+  [
+    "01",
+    "Import in seconds",
+    "Drop in a Kindle My Clippings file, a CSV export, or just paste quotes. Reado splits them into clean, separate highlights.",
+  ],
+  [
+    "02",
+    "Books wire themselves up",
+    "Every highlight is matched to its book — cover art, author and publication year found automatically.",
+  ],
+  [
+    "03",
+    "Review five a day",
+    "A quiet daily review resurfaces a handful of passages, and an email digest brings them to your inbox on your schedule.",
+  ],
+];
+const FEATURES = [
+  [
+    "Distraction-free reader",
+    "No sidebars, no badges. Adjustable type size, line height, measure and three reading themes.",
+  ],
+  [
+    "Highlight anything",
+    "Select text while reading and it's saved as a highlight, linked to the document forever.",
+  ],
+  [
+    "Your own API",
+    "A personal endpoint so other tools can push highlights into Reado programmatically.",
+  ],
+  [
+    "Email digests",
+    "Daily or weekly review emails, styled like the app — plain, typographic, calm.",
+  ],
+];
+export function Landing() {
+  const { session, loading } = useAuth();
+  const primaryTo = session ? "/review" : "/auth";
+  const primaryLabel = session ? "Open your review" : "Start free";
+  return (
+    <div className="min-h-screen bg-background text-foreground">
+      <header className="sticky top-0 z-20 border-b border-border bg-background/95 backdrop-blur">
+        <div className="mx-auto flex h-14 max-w-5xl items-center justify-between gap-6 px-5">
+          <Link href="/" className="flex shrink-0 items-center gap-2">
+            <img src={logoAsset.url} alt="Reado" className="h-6 w-auto object-contain" />
+            <span className="font-display text-lg font-semibold tracking-tight">Reado</span>
+          </Link>
+          <div className="flex items-center gap-2">
+            {!loading && session ? (
+              <>
+                <Link href="/pricing" className="chrome-btn">
+                  Plans
+                </Link>
+                <Link href="/review" className="brass-btn">
+                  Open Reado
+                </Link>
+              </>
+            ) : (
+              <>
+                <Link href="/pricing" className="chrome-btn">
+                  Plans
+                </Link>
+                <Link href="/auth" className="chrome-btn">
+                  Sign in
+                </Link>
+                <Link href="/auth" className="brass-btn">
+                  Start free
+                </Link>
+              </>
+            )}
+          </div>
+        </div>
+      </header>
+      <main>
+        <Reveal>
+          <section className="mx-auto max-w-3xl px-5 pb-16 pt-20 text-center">
+            <p className="eyebrow">Highlights · Reader · Daily review</p>
+            <h1 className="mx-auto mt-5 max-w-2xl font-display text-4xl font-semibold leading-[1.05] tracking-tight text-balance sm:text-6xl">
+              You read a lot. Remember it this time.
+            </h1>
+            <p className="mx-auto mt-5 max-w-xl font-body text-lg leading-relaxed text-muted-foreground">
+              Reado keeps every passage you highlight, files it under the right book, and hands a
+              few of them back to you each day — in a black-and-white room with nothing else in it.
+            </p>
+            <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+              <Link href={primaryTo} className="brass-btn px-5 py-3 text-[13px]">
+                {primaryLabel}
+              </Link>
+              <Link href="/pricing" className="chrome-btn px-5 py-3 text-[13px]">
+                View plans
+              </Link>
+            </div>
+            <p className="mt-4 text-[11px] uppercase tracking-[0.16em] text-muted-foreground/80">
+              Free to start · No credit card · Import in one click
+            </p>
+            <figure className="mt-14 rounded-xl border border-border bg-surface/60 p-8 text-left">
+              <blockquote className="font-body text-xl italic leading-relaxed text-foreground/90">
+                “Attention is the rarest and purest form of generosity.”
+              </blockquote>
+              <figcaption className="mt-4 border-t border-border/70 pt-3 text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
+                The Lantern Room · Marguerite Halloway · p. 88
+              </figcaption>
+            </figure>
+          </section>
+        </Reveal>
+        <Reveal>
+          <section className="mx-auto max-w-5xl px-5 pb-20">
+            <h2 className="font-display text-2xl font-semibold tracking-tight">How it works</h2>
+            <ol className="mt-6 grid gap-4 sm:grid-cols-3">
+              {STEPS.map(([step, title, body]) => (
+                <li key={step} className="rounded-xl border border-border bg-surface/50 p-5">
+                  <p className="eyebrow">{step}</p>
+                  <h3 className="mt-3 font-display text-base font-semibold tracking-tight">
+                    {title}
+                  </h3>
+                  <p className="mt-2 font-body text-[14px] leading-relaxed text-muted-foreground">
+                    {body}
+                  </p>
+                </li>
+              ))}
+            </ol>
+          </section>
+        </Reveal>
+        <Reveal>
+          <section className="mx-auto max-w-5xl px-5 pb-20">
+            <h2 className="font-display text-2xl font-semibold tracking-tight">
+              Everything, nothing more
+            </h2>
+            <ul className="mt-6 grid gap-4 sm:grid-cols-2">
+              {FEATURES.map(([title, body]) => (
+                <li key={title} className="rounded-xl border border-border p-5">
+                  <h3 className="font-display text-base font-semibold tracking-tight">{title}</h3>
+                  <p className="mt-2 font-body text-[14px] leading-relaxed text-muted-foreground">
+                    {body}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          </section>
+        </Reveal>
+      </main>
+      <footer className="border-t border-border">
+        <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3 px-5 py-8 text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
+          <span>Reado</span>
+          <Link href="/pricing" className="hover:text-foreground">
+            Plans
+          </Link>
+          <Link href="/auth" className="hover:text-foreground">
+            Sign in
+          </Link>
+        </div>
+      </footer>
+    </div>
+  );
+}

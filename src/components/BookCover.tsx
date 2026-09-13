@@ -49,7 +49,6 @@ export function BookCover({ title, author, coverUrl, className = "w-10", mono = 
           className={`size-full object-cover ${mono ? "grayscale contrast-125" : ""}`}
         />
       ) : (
-
         <div className="flex size-full items-center justify-center">
           <span className="font-display text-[11px] font-semibold tracking-[0.1em] text-muted-foreground">
             {initials(title) || "??"}

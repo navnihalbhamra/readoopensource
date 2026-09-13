@@ -1,15 +1,17 @@
-import type { ComponentType } from 'react'
+import type { ComponentType } from "react";
 
-import { template as dailyReviewTemplate } from './daily-review'
+import { template as dailyReviewTemplate } from "./daily-review";
 
+/** Props accepted by every email template (react-email components are loose). */
+export type TemplateData = Record<string, unknown>;
 
 export interface TemplateEntry {
-  component: ComponentType<any>
-  subject: string | ((data: Record<string, any>) => string)
-  displayName?: string
-  previewData?: Record<string, any>
+  component: ComponentType<TemplateData>;
+  subject: string | ((data: TemplateData) => string);
+  displayName?: string;
+  previewData?: TemplateData;
   /** Fixed recipient — overrides caller-provided recipientEmail when set. */
-  to?: string
+  to?: string;
 }
 
 /**
@@ -21,5 +23,5 @@ export interface TemplateEntry {
  *   // then add to TEMPLATES: 'welcome': welcomeTemplate
  */
 export const TEMPLATES: Record<string, TemplateEntry> = {
-  'daily-review': dailyReviewTemplate,
-}
+  "daily-review": dailyReviewTemplate,
+};

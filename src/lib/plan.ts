@@ -13,9 +13,29 @@ export interface PriceOption {
 }
 
 export const PRICES: PriceOption[] = [
-  { id: "monthly", name: "Pro monthly", price: "$5", cadence: "per month", note: "Cancel whenever you like." },
-  { id: "yearly", name: "Pro yearly", price: "$39", cadence: "per year", note: "The calmest way to stay current.", badge: "Best value" },
-  { id: "lifetime", name: "Lifetime", price: "$49", cadence: "once", note: "Founding-reader price while it lasts.", badge: "Founding reader" },
+  {
+    id: "monthly",
+    name: "Pro monthly",
+    price: "$5",
+    cadence: "per month",
+    note: "Cancel whenever you like.",
+  },
+  {
+    id: "yearly",
+    name: "Pro yearly",
+    price: "$39",
+    cadence: "per year",
+    note: "The calmest way to stay current.",
+    badge: "Best value",
+  },
+  {
+    id: "lifetime",
+    name: "Lifetime",
+    price: "$49",
+    cadence: "once",
+    note: "Founding-reader price while it lasts.",
+    badge: "Founding reader",
+  },
 ];
 
 export const FREE_FEATURES = [
@@ -43,7 +63,10 @@ export interface Entitlements {
   canEnrichBooks: boolean;
 }
 
-export function entitlementsFor(plan: string | null | undefined, highlightCount: number): Entitlements {
+export function entitlementsFor(
+  plan: string | null | undefined,
+  highlightCount: number,
+): Entitlements {
   const resolved: Plan = plan === "pro" || plan === "lifetime" ? plan : "free";
   const isPro = resolved !== "free";
   return {

@@ -23,7 +23,7 @@ export function useCheckout() {
       }
 
       setIsLoading(true);
-      
+
       const response = await fetch("/api/public/checkout", {
         method: "POST",
         headers: { "content-type": "application/json" },

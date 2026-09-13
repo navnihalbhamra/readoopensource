@@ -1,5 +1,6 @@
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
 import { useState, type ReactNode } from "react";
-import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 
 import logoAsset from "@/assets/reado-mark.png.asset.json";
 import { Spinner } from "@/components/Spinner";
@@ -25,9 +26,8 @@ const NAV = [
 export function AppShell({ prefs, update, children, focus = false }: Props) {
   const [typeOpen, setTypeOpen] = useState(false);
   const { signOut } = useAuth();
-  const navigate = useNavigate();
-  const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const navigating = useRouterState({ select: (s) => s.status === "pending" || s.isLoading });
+  const router = useRouter();
+  const pathname = usePathname() ?? "";
   const width = { maxWidth: `${prefs.measure + 8}ch` };
 
   return (
@@ -35,7 +35,7 @@ export function AppShell({ prefs, update, children, focus = false }: Props) {
       {!focus && (
         <header className="sticky top-0 z-20 border-b border-border bg-background/80 backdrop-blur-md">
           <div className="mx-auto flex h-14 items-center gap-5 px-5" style={width}>
-            <Link to="/review" className="group flex shrink-0 items-center gap-2">
+            <Link href="/review" className="group flex shrink-0 items-center gap-2">
               <img
                 src={logoAsset.url}
                 alt="Reado"
@@ -51,7 +51,7 @@ export function AppShell({ prefs, update, children, focus = false }: Props) {
                 return (
                   <Link
                     key={item.to}
-                    to={item.to}
+                    href={item.to}
                     className={`nav-link ${active ? "is-active" : ""}`}
                     aria-current={active ? "page" : undefined}
                   >
@@ -61,7 +61,6 @@ export function AppShell({ prefs, update, children, focus = false }: Props) {
               })}
             </nav>
             <div className="relative flex shrink-0 items-center gap-2">
-              {navigating && <Spinner className="h-3.5 w-3.5" label="Loading page" />}
               <button
                 className="chrome-btn"
                 onClick={() => setTypeOpen((open) => !open)}
@@ -73,7 +72,7 @@ export function AppShell({ prefs, update, children, focus = false }: Props) {
                 className="chrome-btn"
                 onClick={async () => {
                   await signOut();
-                  navigate({ to: "/auth", replace: true });
+                  router.replace("/auth");
                 }}
               >
                 Sign out

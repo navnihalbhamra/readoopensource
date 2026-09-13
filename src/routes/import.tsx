@@ -1,6 +1,6 @@
-import { createFileRoute } from "@tanstack/react-router";
+import * as React from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useServerFn } from "@tanstack/react-start";
+import { useServerFn } from "@/lib/next-server-fn";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
 
@@ -8,32 +8,8 @@ import { AppShell } from "@/components/AppShell";
 import { RequireAuth } from "@/components/RequireAuth";
 import { Spinner } from "@/components/Spinner";
 import { useReaderPrefs } from "@/hooks/useReaderPrefs";
-import { enrichBooks, importHighlights, saveHighlight } from "@/lib/focus.functions";
 
-export const Route = createFileRoute("/import")({
-  head: () => ({
-    meta: [
-      { title: "Import highlights — Reado" },
-      {
-        name: "description",
-        content:
-          "Upload a Kindle My Clippings.txt or CSV export, and Reado files everything by book and author.",
-      },
-      { property: "og:title", content: "Import highlights — Reado" },
-      {
-        property: "og:description",
-        content: "Bring your Kindle and CSV book highlights into one quiet archive.",
-      },
-    ],
-  }),
-  component: () => (
-    <RequireAuth>
-      <ImportPage />
-    </RequireAuth>
-  ),
-});
-
-function ImportPage() {
+export function ImportPage() {
   const { prefs, update } = useReaderPrefs();
   const queryClient = useQueryClient();
   const fileRef = useRef<HTMLInputElement>(null);
@@ -42,10 +18,10 @@ function ImportPage() {
   const [author, setAuthor] = useState("");
   const [text, setText] = useState("");
 
-  const runEnrich = useServerFn(enrichBooks);
+  const runEnrich = useServerFn("enrichBooks");
 
   const runImport = useMutation({
-    mutationFn: useServerFn(importHighlights),
+    mutationFn: useServerFn("importHighlights"),
     onSuccess: async (result: { parsed: number; imported: number; skipped: number }) => {
       if (result.parsed === 0) {
         toast.error("Nothing recognisable in that text — try one quote per paragraph.");
@@ -72,7 +48,7 @@ function ImportPage() {
   });
 
   const addOne = useMutation({
-    mutationFn: useServerFn(saveHighlight),
+    mutationFn: useServerFn("saveHighlight"),
     onSuccess: async () => {
       toast.success("Highlight saved");
       setText("");
@@ -87,7 +63,6 @@ function ImportPage() {
     },
     onError: (error: Error) => toast.error(error.message),
   });
-
 
   async function onFile(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
@@ -143,9 +118,7 @@ function ImportPage() {
           <button
             className="brass-btn mt-3"
             disabled={!pasted.trim() || runImport.isPending}
-            onClick={() =>
-              runImport.mutate({ data: { filename: "pasted.txt", contents: pasted } })
-            }
+            onClick={() => runImport.mutate({ data: { filename: "pasted.txt", contents: pasted } })}
           >
             {runImport.isPending && <Spinner label="Importing highlights" />}
             {runImport.isPending ? "Importing…" : "Import pasted text"}
@@ -197,7 +170,6 @@ function ImportPage() {
           </button>
         </div>
       </section>
-
     </AppShell>
   );
 }

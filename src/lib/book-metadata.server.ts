@@ -44,14 +44,38 @@ function similarity(a: string, b: string): number {
   return shared / Math.max(left.size, right.size);
 }
 
-async function getJson(url: string): Promise<any | null> {
+/** Shapes of the keyless API payloads we consume. */
+interface OpenLibraryDoc {
+  key?: string;
+  title?: string;
+  author_name?: string[];
+  cover_i?: number;
+  first_publish_year?: number;
+  subject?: string[];
+  edition_key?: string[];
+}
+
+interface GoogleVolumeInfo {
+  title?: string;
+  authors?: string[];
+  publishedDate?: string;
+  description?: string;
+  categories?: string[];
+  imageLinks?: { thumbnail?: string; smallThumbnail?: string };
+}
+
+interface GoogleVolume {
+  volumeInfo?: GoogleVolumeInfo;
+}
+
+async function getJson(url: string): Promise<Record<string, unknown> | null> {
   try {
     const response = await fetch(url, {
       headers: { accept: "application/json", "user-agent": "Reado/1.0 (highlight review app)" },
       signal: AbortSignal.timeout(8000),
     });
     if (!response.ok) return null;
-    return await response.json();
+    return (await response.json()) as Record<string, unknown>;
   } catch {
     return null;
   }
@@ -64,7 +88,9 @@ async function searchOpenLibrary(title: string, author?: string | null): Promise
     limit: "10",
   });
   const payload = await getJson(`https://openlibrary.org/search.json?${params}`);
-  const docs: any[] = Array.isArray(payload?.docs) ? payload.docs : [];
+  const docs: OpenLibraryDoc[] = Array.isArray(payload?.docs)
+    ? (payload.docs as OpenLibraryDoc[])
+    : [];
   if (docs.length === 0) return null;
 
   const authorTokens = normalizeTitle(author ?? "")
@@ -126,7 +152,6 @@ async function searchOpenLibrary(title: string, author?: string | null): Promise
   };
 }
 
-
 async function searchGoogleBooks(title: string, author?: string | null): Promise<BookMatch | null> {
   // Join terms with a space: encodeURIComponent would turn a literal "+" into
   // %2B, which Google Books treats as part of the search text.
@@ -135,7 +160,9 @@ async function searchGoogleBooks(title: string, author?: string | null): Promise
     `https://www.googleapis.com/books/v1/volumes?maxResults=5&q=${encodeURIComponent(query)}`,
   );
 
-  const items: any[] = Array.isArray(payload?.items) ? payload.items : [];
+  const items: GoogleVolume[] = Array.isArray(payload?.items)
+    ? (payload.items as GoogleVolume[])
+    : [];
   if (items.length === 0) return null;
 
   const scored = items
@@ -176,10 +203,7 @@ async function coverExists(url: string): Promise<boolean> {
 }
 
 /** Look a book up, Open Library first, Google Books as a fallback. */
-export async function lookupBook(
-  title: string,
-  author?: string | null,
-): Promise<BookMatch | null> {
+export async function lookupBook(title: string, author?: string | null): Promise<BookMatch | null> {
   const clean = title.replace(/\s+/g, " ").trim();
   if (!clean) return null;
 
@@ -201,14 +225,13 @@ export async function lookupBook(
     // Open Library search omits descriptions; fetch the work record for one.
     if (openLibrary.open_library_key) {
       const work = await getJson(`https://openlibrary.org${openLibrary.open_library_key}.json`);
-      const raw = work?.description;
-      const text = typeof raw === "string" ? raw : typeof raw?.value === "string" ? raw.value : null;
+      const raw = work?.description as string | { value?: string } | undefined;
+      const text =
+        typeof raw === "string" ? raw : typeof raw?.value === "string" ? raw.value : null;
       if (text) openLibrary.description = text.slice(0, 1200);
     }
     return openLibrary;
   }
-
-
 
   const google = await searchGoogleBooks(clean, author);
   if (google) return google;

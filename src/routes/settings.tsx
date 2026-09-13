@@ -1,6 +1,6 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useServerFn } from "@tanstack/react-start";
+import { useServerFn } from "@/lib/next-server-fn";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -9,23 +9,233 @@ import { RequireAuth } from "@/components/RequireAuth";
 import { Spinner } from "@/components/Spinner";
 import { TypeControls } from "@/components/TypeControls";
 import { useReaderPrefs } from "@/hooks/useReaderPrefs";
-import { getProfile, sendTestDigest, updateDigestSettings } from "@/lib/focus.functions";
-import { syncClerkProfile, updateDigestEmail } from "@/lib/clerk.functions";
 import { planLabel } from "@/lib/plan";
 
-export const Route = createFileRoute("/settings")({ head: () => ({ meta: [{ title: "Settings — Reado" }, { name: "description", content: "Choose your review digest schedule, tune reading typography, and manage your Reado plan and email inbox." }, { property: "og:title", content: "Settings — Reado" }, { property: "og:description", content: "Digest schedule, typography defaults, email delivery and plan settings." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }), component: () => <RequireAuth><Settings /></RequireAuth> });
-
-function Settings() {
+export function Settings() {
   const { prefs, update } = useReaderPrefs();
   const queryClient = useQueryClient();
-  const profile = useQuery({ queryKey: ["profile"], queryFn: useServerFn(getProfile) });
-  const sync = useMutation({ mutationFn: useServerFn(syncClerkProfile), onSuccess: () => queryClient.invalidateQueries({ queryKey: ["profile"] }), onError: () => undefined });
-  const changeEmail = useMutation({ mutationFn: useServerFn(updateDigestEmail), onSuccess: () => { toast.success("Digest inbox updated"); queryClient.invalidateQueries({ queryKey: ["profile"] }); }, onError: (error: Error) => toast.error(error.message) });
-  const [enabled, setEnabled] = useState(true); const [frequency, setFrequency] = useState<"daily" | "weekly">("daily");
-  useEffect(() => { if (profile.data) { setEnabled(profile.data.digest_enabled ?? true); setFrequency((profile.data.digest_frequency ?? "daily") as "daily" | "weekly"); } }, [profile.data]);
-  useEffect(() => { sync.mutate(undefined); }, []);
-  const save = useMutation({ mutationFn: useServerFn(updateDigestSettings), onSuccess: () => { toast.success("Digest settings saved"); queryClient.invalidateQueries({ queryKey: ["profile"] }); }, onError: (error: Error) => toast.error(error.message) });
-  const testSend = useMutation({ mutationFn: useServerFn(sendTestDigest), onSuccess: (result: { sent: boolean; to?: string; reason?: string }) => { if (result.sent) toast.success(`Digest sent to ${result.to}`); else toast.error(result.reason === "email_not_configured" ? "Email sending isn't verified yet — DNS is still propagating." : `Not sent: ${result.reason}`); }, onError: (error: Error) => toast.error(error.message) });
-  const apiKey = profile.data?.api_key ?? ""; const emails = profile.data?.linked_emails ?? []; const entitlements = profile.data?.entitlements;
-  return <AppShell prefs={prefs} update={update} eyebrow="Settings"><div className="pt-8 pb-6"><p className="eyebrow">Preferences</p><h1 className="mt-3 font-display text-3xl font-semibold leading-tight tracking-tight text-balance">Settings</h1><p className="mt-2 font-body text-sm text-muted-foreground">{profile.data?.display_name || profile.data?.email}</p></div><section className="border-t border-border py-7"><div className="flex flex-wrap items-start justify-between gap-4"><div><p className="eyebrow">Your plan</p><h2 className="mt-2 font-display text-xl font-semibold tracking-tight">{planLabel(profile.data?.plan)}</h2><p className="mt-1.5 font-body text-[13px] text-muted-foreground">{entitlements?.highlightLimit === null ? `${entitlements.highlightCount} highlights saved · unlimited archive` : `${entitlements?.highlightCount ?? 0} of ${entitlements?.highlightLimit ?? 100} highlights saved`}</p></div><Link to="/pricing" className="brass-btn">View plans</Link></div>{entitlements?.highlightLimit !== null && <div className="mt-5 h-1.5 overflow-hidden rounded-full bg-inkwash"><div className="h-full rounded-full bg-primary transition-all duration-700" style={{ width: `${Math.min(100, ((entitlements?.highlightCount ?? 0) / (entitlements?.highlightLimit ?? 100)) * 100)}%` }} /></div>}</section><section className="border-t border-border py-7"><h2 className="font-display text-xl font-semibold tracking-tight">Review digest</h2><p className="mt-1.5 font-body text-[13px] text-muted-foreground">A short email with 3–5 random highlights from your archive.</p><label className="mt-4 flex items-center gap-2.5"><input type="checkbox" checked={enabled} onChange={(e) => setEnabled(e.target.checked)} className="size-4 accent-primary" /><span className="font-body text-[13px]">Email me a review digest</span></label><div className="mt-3 flex gap-1.5">{(["daily", "weekly"] as const).map((option) => <button key={option} onClick={() => setFrequency(option)} className={frequency === option ? "brass-btn" : "chrome-btn"}>{option === "daily" ? "Daily" : "Weekly"}</button>)}</div><button className="brass-btn mt-5" disabled={save.isPending} onClick={() => save.mutate({ data: { digest_enabled: enabled, digest_frequency: frequency } })}>{save.isPending && <Spinner label="Saving digest settings" />}{save.isPending ? "Saving…" : "Save digest settings"}</button>{profile.data?.last_digest_at && <p className="mt-3 text-[11px] text-muted-foreground">Last sent {new Date(profile.data.last_digest_at).toLocaleString()}</p>}</section><section className="border-t border-border py-7"><h2 className="font-display text-xl font-semibold tracking-tight">Email delivery</h2><p className="mt-1.5 font-body text-[13px] text-muted-foreground">Clerk keeps your verified Google and email addresses in sync. Choose where Reado should send your reviews.</p><label className="mt-4 block text-[11px] uppercase tracking-[0.14em] text-muted-foreground" htmlFor="digest-email">Review inbox</label><select id="digest-email" value={profile.data?.digest_email ?? ""} onChange={(event) => changeEmail.mutate({ data: { email: event.target.value } })} disabled={changeEmail.isPending || emails.length === 0} className="mt-2 w-full rounded-lg border border-border bg-surface px-3 py-2.5 text-sm text-foreground outline-none transition-colors focus:border-foreground"><option value="" disabled>Select a verified email</option>{emails.map((email) => <option key={email} value={email}>{email}</option>)}</select><dl className="mt-5 space-y-2 font-body text-[13px]"><div className="flex justify-between gap-4"><dt className="text-muted-foreground">From</dt><dd>Reado · notify.reado.lol</dd></div><div className="flex justify-between gap-4"><dt className="text-muted-foreground">Schedule</dt><dd>{enabled ? (frequency === "daily" && entitlements?.canUseDailyDigest ? "Once a day" : "Once a week") : "Paused"}</dd></div><div className="flex justify-between gap-4"><dt className="text-muted-foreground">Contents</dt><dd>3–5 random highlights</dd></div></dl><button className="chrome-btn mt-4" disabled={testSend.isPending} onClick={() => testSend.mutate(undefined)}>{testSend.isPending && <Spinner label="Sending digest" />}{testSend.isPending ? "Sending…" : "Send me one now"}</button><p className="mt-3 text-[11px] text-muted-foreground">Unsubscribe links are handled automatically; turning the digest off above also stops delivery.</p></section><section className="border-t border-border py-7"><h2 className="font-display text-xl font-semibold tracking-tight">Reading defaults</h2><p className="mt-1.5 font-body text-[13px] text-muted-foreground">Applies everywhere and persists on this device.</p><div className="mt-4"><TypeControls prefs={prefs} update={update} /></div></section><section className="border-t border-border py-7 pb-16"><h2 className="font-display text-xl font-semibold tracking-tight">Highlight API</h2><p className="mt-1.5 font-body text-[13px] text-muted-foreground">POST highlights from any script or service with your key.</p><div className="mt-4 flex items-center gap-2"><code className="min-w-0 flex-1 truncate rounded-lg bg-surface px-3 py-2.5 font-mono text-[12px] ring-1 ring-border">{apiKey || "—"}</code><button className="chrome-btn shrink-0" onClick={() => { navigator.clipboard.writeText(apiKey); toast.success("API key copied"); }}>Copy</button></div><pre className="mt-4 overflow-x-auto rounded-lg bg-surface p-4 font-mono text-[11px] leading-relaxed ring-1 ring-border">{`curl -X POST ${typeof window !== "undefined" ? window.location.origin : ""}/api/public/highlights \\\n  -H "content-type: application/json" \\\n  -H "x-api-key: ${apiKey || "YOUR_KEY"}" \\\n  -d '{"book_title":"Sapiens","author":"Yuval Noah Harari","text":"..."}'`}</pre></section></AppShell>;
+  const profile = useQuery({ queryKey: ["profile"], queryFn: useServerFn("getProfile") });
+  const sync = useMutation({
+    mutationFn: useServerFn("syncClerkProfile"),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["profile"] }),
+    onError: () => undefined,
+  });
+  const changeEmail = useMutation({
+    mutationFn: useServerFn("updateDigestEmail"),
+    onSuccess: () => {
+      toast.success("Digest inbox updated");
+      queryClient.invalidateQueries({ queryKey: ["profile"] });
+    },
+    onError: (error: Error) => toast.error(error.message),
+  });
+  const [enabled, setEnabled] = useState(true);
+  const [frequency, setFrequency] = useState<"daily" | "weekly">("daily");
+  useEffect(() => {
+    if (profile.data) {
+      setEnabled(profile.data.digest_enabled ?? true);
+      setFrequency((profile.data.digest_frequency ?? "daily") as "daily" | "weekly");
+    }
+  }, [profile.data]);
+  // Sync Clerk's profile once on mount; `mutate` is stable across renders.
+  const { mutate: syncMutate } = sync;
+  useEffect(() => {
+    syncMutate(undefined);
+  }, [syncMutate]);
+  const save = useMutation({
+    mutationFn: useServerFn("updateDigestSettings"),
+    onSuccess: () => {
+      toast.success("Digest settings saved");
+      queryClient.invalidateQueries({ queryKey: ["profile"] });
+    },
+    onError: (error: Error) => toast.error(error.message),
+  });
+  const testSend = useMutation({
+    mutationFn: useServerFn("sendTestDigest"),
+    onSuccess: (result: { sent: boolean; to?: string; reason?: string }) => {
+      if (result.sent) toast.success(`Digest sent to ${result.to}`);
+      else
+        toast.error(
+          result.reason === "email_not_configured"
+            ? "Email sending isn't verified yet — DNS is still propagating."
+            : `Not sent: ${result.reason}`,
+        );
+    },
+    onError: (error: Error) => toast.error(error.message),
+  });
+  const apiKey = profile.data?.api_key ?? "";
+  const emails = profile.data?.linked_emails ?? [];
+  const entitlements = profile.data?.entitlements;
+  return (
+    <AppShell prefs={prefs} update={update} eyebrow="Settings">
+      <div className="pt-8 pb-6">
+        <p className="eyebrow">Preferences</p>
+        <h1 className="mt-3 font-display text-3xl font-semibold leading-tight tracking-tight text-balance">
+          Settings
+        </h1>
+        <p className="mt-2 font-body text-sm text-muted-foreground">
+          {profile.data?.display_name || profile.data?.email}
+        </p>
+      </div>
+      <section className="border-t border-border py-7">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <p className="eyebrow">Your plan</p>
+            <h2 className="mt-2 font-display text-xl font-semibold tracking-tight">
+              {planLabel(profile.data?.plan)}
+            </h2>
+            <p className="mt-1.5 font-body text-[13px] text-muted-foreground">
+              {entitlements?.highlightLimit === null
+                ? `${entitlements.highlightCount} highlights saved · unlimited archive`
+                : `${entitlements?.highlightCount ?? 0} of ${entitlements?.highlightLimit ?? 100} highlights saved`}
+            </p>
+          </div>
+          <Link href="/pricing" className="brass-btn">
+            View plans
+          </Link>
+        </div>
+        {entitlements?.highlightLimit !== null && (
+          <div className="mt-5 h-1.5 overflow-hidden rounded-full bg-inkwash">
+            <div
+              className="h-full rounded-full bg-primary transition-all duration-700"
+              style={{
+                width: `${Math.min(100, ((entitlements?.highlightCount ?? 0) / (entitlements?.highlightLimit ?? 100)) * 100)}%`,
+              }}
+            />
+          </div>
+        )}
+      </section>
+      <section className="border-t border-border py-7">
+        <h2 className="font-display text-xl font-semibold tracking-tight">Review digest</h2>
+        <p className="mt-1.5 font-body text-[13px] text-muted-foreground">
+          A short email with 3–5 random highlights from your archive.
+        </p>
+        <label className="mt-4 flex items-center gap-2.5">
+          <input
+            type="checkbox"
+            checked={enabled}
+            onChange={(e) => setEnabled(e.target.checked)}
+            className="size-4 accent-primary"
+          />
+          <span className="font-body text-[13px]">Email me a review digest</span>
+        </label>
+        <div className="mt-3 flex gap-1.5">
+          {(["daily", "weekly"] as const).map((option) => (
+            <button
+              key={option}
+              onClick={() => setFrequency(option)}
+              className={frequency === option ? "brass-btn" : "chrome-btn"}
+            >
+              {option === "daily" ? "Daily" : "Weekly"}
+            </button>
+          ))}
+        </div>
+        <button
+          className="brass-btn mt-5"
+          disabled={save.isPending}
+          onClick={() =>
+            save.mutate({ data: { digest_enabled: enabled, digest_frequency: frequency } })
+          }
+        >
+          {save.isPending && <Spinner label="Saving digest settings" />}
+          {save.isPending ? "Saving…" : "Save digest settings"}
+        </button>
+        {profile.data?.last_digest_at && (
+          <p className="mt-3 text-[11px] text-muted-foreground">
+            Last sent {new Date(profile.data.last_digest_at).toLocaleString()}
+          </p>
+        )}
+      </section>
+      <section className="border-t border-border py-7">
+        <h2 className="font-display text-xl font-semibold tracking-tight">Email delivery</h2>
+        <p className="mt-1.5 font-body text-[13px] text-muted-foreground">
+          Clerk keeps your verified Google and email addresses in sync. Choose where Reado should
+          send your reviews.
+        </p>
+        <label
+          className="mt-4 block text-[11px] uppercase tracking-[0.14em] text-muted-foreground"
+          htmlFor="digest-email"
+        >
+          Review inbox
+        </label>
+        <select
+          id="digest-email"
+          value={profile.data?.digest_email ?? ""}
+          onChange={(event) => changeEmail.mutate({ data: { email: event.target.value } })}
+          disabled={changeEmail.isPending || emails.length === 0}
+          className="mt-2 w-full rounded-lg border border-border bg-surface px-3 py-2.5 text-sm text-foreground outline-none transition-colors focus:border-foreground"
+        >
+          <option value="" disabled>
+            Select a verified email
+          </option>
+          {emails.map((email) => (
+            <option key={email} value={email}>
+              {email}
+            </option>
+          ))}
+        </select>
+        <dl className="mt-5 space-y-2 font-body text-[13px]">
+          <div className="flex justify-between gap-4">
+            <dt className="text-muted-foreground">From</dt>
+            <dd>Reado · notify.reado.lol</dd>
+          </div>
+          <div className="flex justify-between gap-4">
+            <dt className="text-muted-foreground">Schedule</dt>
+            <dd>
+              {enabled
+                ? frequency === "daily" && entitlements?.canUseDailyDigest
+                  ? "Once a day"
+                  : "Once a week"
+                : "Paused"}
+            </dd>
+          </div>
+          <div className="flex justify-between gap-4">
+            <dt className="text-muted-foreground">Contents</dt>
+            <dd>3–5 random highlights</dd>
+          </div>
+        </dl>
+        <button
+          className="chrome-btn mt-4"
+          disabled={testSend.isPending}
+          onClick={() => testSend.mutate(undefined)}
+        >
+          {testSend.isPending && <Spinner label="Sending digest" />}
+          {testSend.isPending ? "Sending…" : "Send me one now"}
+        </button>
+        <p className="mt-3 text-[11px] text-muted-foreground">
+          Unsubscribe links are handled automatically; turning the digest off above also stops
+          delivery.
+        </p>
+      </section>
+      <section className="border-t border-border py-7">
+        <h2 className="font-display text-xl font-semibold tracking-tight">Reading defaults</h2>
+        <p className="mt-1.5 font-body text-[13px] text-muted-foreground">
+          Applies everywhere and persists on this device.
+        </p>
+        <div className="mt-4">
+          <TypeControls prefs={prefs} update={update} />
+        </div>
+      </section>
+      <section className="border-t border-border py-7 pb-16">
+        <h2 className="font-display text-xl font-semibold tracking-tight">Highlight API</h2>
+        <p className="mt-1.5 font-body text-[13px] text-muted-foreground">
+          POST highlights from any script or service with your key.
+        </p>
+        <div className="mt-4 flex items-center gap-2">
+          <code className="min-w-0 flex-1 truncate rounded-lg bg-surface px-3 py-2.5 font-mono text-[12px] ring-1 ring-border">
+            {apiKey || "—"}
+          </code>
+          <button
+            className="chrome-btn shrink-0"
+            onClick={() => {
+              navigator.clipboard.writeText(apiKey);
+              toast.success("API key copied");
+            }}
+          >
+            Copy
+          </button>
+        </div>
+        <pre className="mt-4 overflow-x-auto rounded-lg bg-surface p-4 font-mono text-[11px] leading-relaxed ring-1 ring-border">{`curl -X POST ${typeof window !== "undefined" ? window.location.origin : ""}/api/public/highlights \\\n  -H "content-type: application/json" \\\n  -H "x-api-key: ${apiKey || "YOUR_KEY"}" \\\n  -d '{"book_title":"Sapiens","author":"Yuval Noah Harari","text":"..."}'`}</pre>
+      </section>
+    </AppShell>
+  );
 }

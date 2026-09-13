@@ -21,24 +21,24 @@ function NotFound() {
                     children: "Nothing here"
                 }, void 0, false, {
                     fileName: "[project]/app/not-found.tsx",
-                    lineNumber: 4,
-                    columnNumber: 130
+                    lineNumber: 7,
+                    columnNumber: 9
                 }, this),
                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$rsc$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["jsxDEV"])("h1", {
                     className: "mt-3 font-display text-3xl font-semibold",
                     children: "This page isn't in your library"
                 }, void 0, false, {
                     fileName: "[project]/app/not-found.tsx",
-                    lineNumber: 4,
-                    columnNumber: 169
+                    lineNumber: 8,
+                    columnNumber: 9
                 }, this),
                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$rsc$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
                     className: "mt-2 text-sm text-muted-foreground",
                     children: "The page you're looking for doesn't exist or has been moved."
                 }, void 0, false, {
                     fileName: "[project]/app/not-found.tsx",
-                    lineNumber: 4,
-                    columnNumber: 267
+                    lineNumber: 11,
+                    columnNumber: 9
                 }, this),
                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$rsc$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$client$2f$app$2d$dir$2f$link$2e$react$2d$server$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["default"], {
                     href: "/",
@@ -46,19 +46,19 @@ function NotFound() {
                     children: "Back to library"
                 }, void 0, false, {
                     fileName: "[project]/app/not-found.tsx",
-                    lineNumber: 4,
-                    columnNumber: 391
+                    lineNumber: 14,
+                    columnNumber: 9
                 }, this)
             ]
         }, void 0, true, {
             fileName: "[project]/app/not-found.tsx",
-            lineNumber: 4,
-            columnNumber: 92
+            lineNumber: 6,
+            columnNumber: 7
         }, this)
     }, void 0, false, {
         fileName: "[project]/app/not-found.tsx",
-        lineNumber: 4,
-        columnNumber: 10
+        lineNumber: 5,
+        columnNumber: 5
     }, this);
 }
 }),

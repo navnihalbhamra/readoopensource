@@ -1,6 +1,0 @@
-{
-  "version": 3,
-  "sources": [],
-  "sections": [
-    {"offset": {"line": 4, "column": 0}, "map": {"version":3,"sources":["file:///E:/Side%20Quests/Highlight%20Haven/app/page.tsx"],"sourcesContent":["\"use client\";\r\nimport { Landing } from \"@/routes/index\";\r\nexport default Landing;\r\n"],"names":["Landing"],"mappings":";;;;;;;;;AAAA;;uCAEeA"}}]
-}

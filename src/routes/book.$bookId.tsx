@@ -1,6 +1,7 @@
-import { createFileRoute, Link, useNavigate, useParams } from "@tanstack/react-router";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useServerFn } from "@tanstack/react-start";
+import { useServerFn } from "@/lib/next-server-fn";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -8,39 +9,12 @@ import { AppShell } from "@/components/AppShell";
 import { BookCover } from "@/components/BookCover";
 import { RequireAuth } from "@/components/RequireAuth";
 import { useReaderPrefs } from "@/hooks/useReaderPrefs";
-import { deleteBook, deleteHighlight, enrichBooks, getBook, updateBook } from "@/lib/focus.functions";
 
-export const Route = createFileRoute("/book/$bookId")({
-  head: () => ({
-    meta: [
-      { title: "Book — Reado" },
-      {
-        name: "description",
-        content:
-          "Cover art, author details and every passage you've highlighted from this book, in one quiet page.",
-      },
-      { property: "og:title", content: "Book — Reado" },
-      {
-        property: "og:description",
-        content: "All your highlights from a single book, with its cover and author info.",
-      },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary" },
-    ],
-  }),
-  component: () => (
-    <RequireAuth>
-      <BookPage />
-    </RequireAuth>
-  ),
-});
-
-function BookPage() {
-  const { bookId } = useParams({ from: "/book/$bookId" });
+export function BookPage({ bookId }: { bookId: string }) {
   const { prefs, update } = useReaderPrefs();
   const queryClient = useQueryClient();
-  const navigate = useNavigate();
-  const fetchBook = useServerFn(getBook);
+  const router = useRouter();
+  const fetchBook = useServerFn("getBook");
   const book = useQuery({
     queryKey: ["book", bookId],
     queryFn: () => fetchBook({ data: { id: bookId } }),
@@ -59,7 +33,7 @@ function BookPage() {
   };
 
   const relookup = useMutation({
-    mutationFn: useServerFn(enrichBooks),
+    mutationFn: useServerFn("enrichBooks"),
     onSuccess: () => {
       toast.success("Looked the book up again");
       invalidate();
@@ -68,7 +42,7 @@ function BookPage() {
   });
 
   const save = useMutation({
-    mutationFn: useServerFn(updateBook),
+    mutationFn: useServerFn("updateBook"),
     onSuccess: () => {
       toast.success("Book details saved");
       setEditing(false);
@@ -78,19 +52,19 @@ function BookPage() {
   });
 
   const removeBook = useMutation({
-    mutationFn: useServerFn(deleteBook),
+    mutationFn: useServerFn("deleteBook"),
     onSuccess: () => {
       toast.success("Book deleted");
       queryClient.invalidateQueries({ queryKey: ["books"] });
       queryClient.invalidateQueries({ queryKey: ["highlights"] });
       queryClient.invalidateQueries({ queryKey: ["review"] });
-      navigate({ to: "/books", replace: true });
+      router.replace("/books");
     },
     onError: (error: Error) => toast.error(error.message),
   });
 
   const removeHighlight = useMutation({
-    mutationFn: useServerFn(deleteHighlight),
+    mutationFn: useServerFn("deleteHighlight"),
     onSuccess: () => {
       toast.success("Highlight deleted");
       invalidate();
@@ -124,7 +98,11 @@ function BookPage() {
                 {record.title}
               </h1>
               <p className="mt-1.5 font-body text-[13px] text-muted-foreground">
-                {[record.author, record.published_year, `${highlights.length} highlight${highlights.length === 1 ? "" : "s"}`]
+                {[
+                  record.author,
+                  record.published_year,
+                  `${highlights.length} highlight${highlights.length === 1 ? "" : "s"}`,
+                ]
                   .filter(Boolean)
                   .join(" · ")}
               </p>
@@ -241,7 +219,7 @@ function BookPage() {
 
           {highlights.length === 0 && (
             <p className="pb-16 font-body text-sm text-muted-foreground">
-              No highlights filed under this book yet. <Link to="/import">Import some</Link>.
+              No highlights filed under this book yet. <Link href="/import">Import some</Link>.
             </p>
           )}
         </>

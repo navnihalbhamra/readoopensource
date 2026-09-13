@@ -1,0 +1,8 @@
+﻿{
+  // Tailwind CSS v4 at-rules (@theme, @utility, @source) are valid — don't flag them.
+  "css.lint.unknownAtRules": "ignore",
+  "scss.lint.unknownAtRules": "ignore",
+  // Use the workspace TypeScript for intellisense.
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "editor.defaultFormatter": "esbenp.prettier-vscode"
+}

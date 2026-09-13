@@ -40,8 +40,9 @@ export function pickDigestHighlights(pool: DigestHighlight[], max = 5): DigestHi
 }
 
 const escape = (value: string) =>
-  value.replace(/[&<>"']/g, (c) =>
-    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!,
+  value.replace(
+    /[&<>"']/g,
+    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!,
   );
 
 /** Plain-HTML digest in the app's velvet palette (email clients need inline CSS). */
@@ -92,9 +93,7 @@ export function renderDigestText(highlights: DigestHighlight[]): string {
     .join("\n\n");
 }
 
-export type DigestSendResult =
-  | { sent: true }
-  | { sent: false; reason: string };
+export type DigestSendResult = { sent: true } | { sent: false; reason: string };
 
 /**
  * Hand the digest to Lovable's managed email sender.
