@@ -1,8 +1,16 @@
-export const clerkPublishableKey =
-  process.env["NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY"] ??
-  process.env["CLERK_PUBLISHABLE_KEY"] ??
-  process.env["VITE_CLERK_PUBLISHABLE_KEY"] ??
-  "pk_live_Y2xlcmsucmVhZG8ubG9sJA";
+// The publishable key is public (it ships to the browser), but it must be a
+// real Clerk key. Empty or malformed values are treated as "not configured"
+// so the app can surface a clear setup notice instead of Clerk's cryptic
+// `failed_to_load_clerk_js` runtime error.
+const rawKey = (
+  process.env["NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY"] ||
+  process.env["CLERK_PUBLISHABLE_KEY"] ||
+  ""
+).trim();
+
+export const clerkPublishableKey: string | null = /^(pk_live|pk_test)_/.test(rawKey)
+  ? rawKey
+  : null;
 
 export const clerkAppearance = {
   variables: {
