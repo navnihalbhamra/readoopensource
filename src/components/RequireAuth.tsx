@@ -1,6 +1,6 @@
 import { SignUp } from '@clerk/nextjs'
 
-export default function SignUpPage() {
+export default function RequireAuth() {
   return <SignUp />
 }
-export { RequireAuth } from '@/components/RequireAuth'
+
