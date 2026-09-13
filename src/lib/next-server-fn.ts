@@ -19,8 +19,7 @@ type ServerFnCallable<K extends ServerFnName> = (
  * Client-side bridge for the RPC layer.
  *
  * Accepts the name of a registered server function and returns a callable that
- * posts the payload to the `rpc` server action — mirroring the old
- * `useServerFn(createServerFn(...))` call shape so pages didn't need rewiring.
+ * posts the payload to the `rpc` server action.
  * The callable is deliberately permissive about its arguments: react-query
  * invokes query functions with a context object, while mutation call sites
  * pass `{ data }` — only the `data` field is ever forwarded to the server.

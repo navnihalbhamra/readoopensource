@@ -14,11 +14,9 @@ const registry: RpcRegistry = {
 /**
  * Generic server-action dispatcher for the app's RPC layer.
  *
- * Replaces TanStack's `createServerFn` transport: the client-side
- * `useServerFn(fn)` shim posts `(fn.name, data)` here, Clerk resolves the
- * signed-in user, and the matched handler runs with a server-only Supabase
- * client. Every handler enforces the same "must be authenticated" boundary
- * the old middleware did.
+ * The client-side `useServerFn(fn)` shim posts `(fn.name, data)` here, Clerk
+ * resolves the signed-in user, and the matched handler runs with a server-only
+ * Supabase client.
  */
 export async function rpc(name: string, data?: unknown) {
   let userId: string | null;

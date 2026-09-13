@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@/lib/data";
 import { useServerFn } from "@/lib/next-server-fn";
 import { useState } from "react";
 import { toast } from "sonner";

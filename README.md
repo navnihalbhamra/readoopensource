@@ -13,7 +13,7 @@ handful every day, and get an email digest on a schedule.
 | Framework     | **Next.js (App Router)** — React 19, server components, server actions           |
 | Build tool    | **Turbopack** (bundled with Next.js)                                             |
 | Routing       | **Next.js App Router** (file-based, `app/`)                                      |
-| Data fetching | **TanStack Query**                                                               |
+| Data fetching | Tiny dependency-free client cache (`src/lib/data.tsx`)           |
 | Auth          | **Clerk** (`@clerk/nextjs`) — email/password + social sign-in, middleware guard  |
 | Styling       | **Tailwind CSS v4** (config-less; tokens live in `src/styles.css`)               |
 | UI primitives | shadcn-style components in `src/components/ui`, `sonner` for toasts              |

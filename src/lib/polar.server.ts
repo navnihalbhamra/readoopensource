@@ -1,5 +1,5 @@
 /**
- * Polar checkout integration for TanStack Start
+ * Polar checkout integration (Next.js route handler)
  * Uses Polar's REST API to create and manage checkouts
  */
 

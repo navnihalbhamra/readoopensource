@@ -1,5 +1,5 @@
 import * as React from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@/lib/data";
 import { useServerFn } from "@/lib/next-server-fn";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
