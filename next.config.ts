@@ -1,9 +1,12 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  typedRoutes: false,
-  typescript: {
-    ignoreBuildErrors: true,
+  typescript: { ignoreBuildErrors: true },
+  images: {
+    remotePatterns: [
+      { protocol: "https", hostname: "covers.openlibrary.org" },
+      { protocol: "https", hostname: "books.google.com" },
+    ],
   },
 };
 

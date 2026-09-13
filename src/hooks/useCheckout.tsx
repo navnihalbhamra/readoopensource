@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useAuth } from "@clerk/react";
+import { useAuth } from "@clerk/nextjs";
 import { toast } from "sonner";
 
 interface CheckoutResponse {

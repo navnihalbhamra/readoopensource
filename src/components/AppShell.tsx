@@ -1,6 +1,5 @@
 import { useState, type ReactNode } from "react";
-import { Link } from "@/lib/next-router-compat";
-import { usePathname, useRouter } from "next/navigation";
+import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 
 import logoAsset from "@/assets/reado-mark.png.asset.json";
 import { Spinner } from "@/components/Spinner";
@@ -26,9 +25,9 @@ const NAV = [
 export function AppShell({ prefs, update, children, focus = false }: Props) {
   const [typeOpen, setTypeOpen] = useState(false);
   const { signOut } = useAuth();
-  const navigate = useRouter();
-  const pathname = usePathname();
-  const navigating = false;
+  const navigate = useNavigate();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const navigating = useRouterState({ select: (s) => s.status === "pending" || s.isLoading });
   const width = { maxWidth: `${prefs.measure + 8}ch` };
 
   return (
@@ -52,7 +51,7 @@ export function AppShell({ prefs, update, children, focus = false }: Props) {
                 return (
                   <Link
                     key={item.to}
-                    href={item.to}
+                    to={item.to}
                     className={`nav-link ${active ? "is-active" : ""}`}
                     aria-current={active ? "page" : undefined}
                   >
@@ -74,7 +73,7 @@ export function AppShell({ prefs, update, children, focus = false }: Props) {
                 className="chrome-btn"
                 onClick={async () => {
                   await signOut();
-                  navigate.replace("/auth");
+                  navigate({ to: "/auth", replace: true });
                 }}
               >
                 Sign out

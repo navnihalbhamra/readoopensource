@@ -1,12 +1,7 @@
 {
   "node": {
-    "00dc4fa1171c06b524fdb8ccbdd9e92807baf51f58": {
+    "006adaa39657d2c4312835b3429bf8bd060d914651": {
       "workers": {
-        "app/auth/page": {
-          "moduleId": "[project]/.next-internal/server/app/auth/page/actions.js { ACTIONS_MODULE0 => \"[project]/node_modules/@clerk/nextjs/dist/esm/app-router/server-actions.js [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
-          "async": false,
-          "codeHash": null
-        },
         "app/page": {
           "moduleId": "[project]/.next-internal/server/app/page/actions.js { ACTIONS_MODULE0 => \"[project]/node_modules/@clerk/nextjs/dist/esm/app-router/server-actions.js [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
           "async": false,
@@ -18,5 +13,5 @@
     }
   },
   "edge": {},
-  "encryptionKey": "MxQQu1q3HaW7DVPE8a/U4Z9IrC4MYw8mJrqdmvBnhU4="
+  "encryptionKey": "zJg+zRM9g3WJ4xU6Bhfl++l0X/hisEUI1Wh6XlSM7io="
 }

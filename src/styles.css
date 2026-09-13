@@ -1,5 +1,6 @@
-@import "tailwindcss";
+@import "tailwindcss" source(none);
 @source "../src";
+@import "tw-animate-css";
 
 @theme inline {
   --radius-sm: calc(var(--radius) - 4px);

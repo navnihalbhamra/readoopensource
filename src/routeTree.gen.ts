@@ -20,7 +20,6 @@ import { Route as ReviewRouteImport } from './routes/review'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as BookBookIdRouteImport } from './routes/book.$bookId'
 import { Route as ReadDocumentIdRouteImport } from './routes/read.$documentId'
-import { Route as ApiPublicCheckoutRouteImport } from './routes/api/public/checkout'
 import { Route as ApiPublicHighlightsRouteImport } from './routes/api/public/highlights'
 import { Route as ApiPublicHooksDigestRouteImport } from './routes/api/public/hooks/digest'
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
@@ -82,11 +81,6 @@ const ReadDocumentIdRoute = ReadDocumentIdRouteImport.update({
   path: '/read/$documentId',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiPublicCheckoutRoute = ApiPublicCheckoutRouteImport.update({
-  id: '/api/public/checkout',
-  path: '/api/public/checkout',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const ApiPublicHighlightsRoute = ApiPublicHighlightsRouteImport.update({
   id: '/api/public/highlights',
   path: '/api/public/highlights',
@@ -126,7 +120,6 @@ export interface FileRoutesByFullPath {
   '/settings': typeof SettingsRoute
   '/book/$bookId': typeof BookBookIdRoute
   '/read/$documentId': typeof ReadDocumentIdRoute
-  '/api/public/checkout': typeof ApiPublicCheckoutRoute
   '/api/public/highlights': typeof ApiPublicHighlightsRoute
   '/api/public/hooks/digest': typeof ApiPublicHooksDigestRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -145,7 +138,6 @@ export interface FileRoutesByTo {
   '/settings': typeof SettingsRoute
   '/book/$bookId': typeof BookBookIdRoute
   '/read/$documentId': typeof ReadDocumentIdRoute
-  '/api/public/checkout': typeof ApiPublicCheckoutRoute
   '/api/public/highlights': typeof ApiPublicHighlightsRoute
   '/api/public/hooks/digest': typeof ApiPublicHooksDigestRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -165,7 +157,6 @@ export interface FileRoutesById {
   '/settings': typeof SettingsRoute
   '/book/$bookId': typeof BookBookIdRoute
   '/read/$documentId': typeof ReadDocumentIdRoute
-  '/api/public/checkout': typeof ApiPublicCheckoutRoute
   '/api/public/highlights': typeof ApiPublicHighlightsRoute
   '/api/public/hooks/digest': typeof ApiPublicHooksDigestRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -186,7 +177,6 @@ export interface FileRouteTypes {
     | '/settings'
     | '/book/$bookId'
     | '/read/$documentId'
-    | '/api/public/checkout'
     | '/api/public/highlights'
     | '/api/public/hooks/digest'
     | '/lovable/email/auth/preview'
@@ -205,7 +195,6 @@ export interface FileRouteTypes {
     | '/settings'
     | '/book/$bookId'
     | '/read/$documentId'
-    | '/api/public/checkout'
     | '/api/public/highlights'
     | '/api/public/hooks/digest'
     | '/lovable/email/auth/preview'
@@ -224,7 +213,6 @@ export interface FileRouteTypes {
     | '/settings'
     | '/book/$bookId'
     | '/read/$documentId'
-    | '/api/public/checkout'
     | '/api/public/highlights'
     | '/api/public/hooks/digest'
     | '/lovable/email/auth/preview'
@@ -244,7 +232,6 @@ export interface RootRouteChildren {
   SettingsRoute: typeof SettingsRoute
   BookBookIdRoute: typeof BookBookIdRoute
   ReadDocumentIdRoute: typeof ReadDocumentIdRoute
-  ApiPublicCheckoutRoute: typeof ApiPublicCheckoutRoute
   ApiPublicHighlightsRoute: typeof ApiPublicHighlightsRoute
   ApiPublicHooksDigestRoute: typeof ApiPublicHooksDigestRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
@@ -331,13 +318,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ReadDocumentIdRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/checkout': {
-      id: '/api/public/checkout'
-      path: '/api/public/checkout'
-      fullPath: '/api/public/checkout'
-      preLoaderRoute: typeof ApiPublicCheckoutRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/api/public/highlights': {
       id: '/api/public/highlights'
       path: '/api/public/highlights'
@@ -388,7 +368,6 @@ const rootRouteChildren: RootRouteChildren = {
   SettingsRoute: SettingsRoute,
   BookBookIdRoute: BookBookIdRoute,
   ReadDocumentIdRoute: ReadDocumentIdRoute,
-  ApiPublicCheckoutRoute: ApiPublicCheckoutRoute,
   ApiPublicHighlightsRoute: ApiPublicHighlightsRoute,
   ApiPublicHooksDigestRoute: ApiPublicHooksDigestRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,

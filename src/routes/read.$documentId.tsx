@@ -1,6 +1,6 @@
-import { createFileRoute, Link } from "@/lib/next-router-compat";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useServerFn } from "@/lib/next-server-fn";
+import { useServerFn } from "@tanstack/react-start";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
@@ -56,8 +56,6 @@ function renderParagraph(text: string, saved: string[]) {
   if (cursor < text.length) parts.push(text.slice(cursor));
   return parts;
 }
-
-export { Reader };
 
 function Reader() {
   const { documentId } = Route.useParams();

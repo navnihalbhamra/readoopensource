@@ -1,6 +1,4 @@
-"use server";
-
-import { createServerFn } from "@/lib/next-server-fn";
+import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
@@ -12,9 +10,8 @@ const onboardingSchema = z.object({
 });
 
 async function getVerifiedEmails(userId: string) {
-  const loadClerkServer = new Function("return import('@clerk/nextjs/server')") as () => Promise<typeof import("@clerk/nextjs/server")>;
-  const { clerkClient } = await loadClerkServer();
-  const clerkUser = await (await clerkClient()).users.getUser(userId);
+  const { clerkClient } = await import("@clerk/tanstack-react-start/server");
+  const clerkUser = await clerkClient().users.getUser(userId);
   const emails = clerkUser.emailAddresses
     .filter((address) => address.verification?.status === "verified")
     .map((address) => address.emailAddress);

@@ -1,10 +1,6 @@
-const clerkPublishableKey = process.env["NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY"];
-
-if (!clerkPublishableKey) {
-  throw new Error("Missing NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY. Add the Clerk publishable key to the environment.");
-}
-
-export { clerkPublishableKey };
+export const clerkPublishableKey =
+  import.meta.env["VITE_CLERK_PUBLISHABLE_KEY"] ??
+  "pk_live_Y2xlcmsucmVhZG8ubG9sJA";
 
 export const clerkAppearance = {
   variables: {

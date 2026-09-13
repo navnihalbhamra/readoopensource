@@ -1,5 +1,5 @@
 import { useEffect, type ReactNode } from "react";
-import { useRouter } from "next/navigation";
+import { useNavigate } from "@tanstack/react-router";
 
 import { Spinner } from "@/components/Spinner";
 import { useAuth } from "@/hooks/useAuth";
@@ -7,11 +7,11 @@ import { useAuth } from "@/hooks/useAuth";
 /** Client-side gate for authenticated screens. Server functions enforce the same boundary. */
 export function RequireAuth({ children }: { children: ReactNode }) {
   const { session, loading } = useAuth();
-  const router = useRouter();
+  const navigate = useNavigate();
 
   useEffect(() => {
-    if (!loading && !session) router.replace("/auth");
-  }, [loading, session, router]);
+    if (!loading && !session) navigate({ to: "/auth", replace: true });
+  }, [loading, session, navigate]);
 
   if (loading || !session) {
     return (

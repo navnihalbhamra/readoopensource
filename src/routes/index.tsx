@@ -1,5 +1,4 @@
-export { Landing };
-import { createFileRoute, Link } from "@/lib/next-router-compat";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import logoAsset from "@/assets/reado-lockup.png.asset.json";
 import { Reveal } from "@/components/Reveal";
 import { useAuth } from "@/hooks/useAuth";

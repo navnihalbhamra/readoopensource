@@ -1,13 +1,18 @@
-export async function requireSupabaseAuth() {
-  const loadAuth = new Function("return import('@clerk/nextjs/server')") as () => Promise<typeof import("@clerk/nextjs/server")>;
-  const { auth } = await loadAuth();
-  const { userId, sessionClaims } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+import { createMiddleware } from "@tanstack/react-start";
+import { auth } from "@clerk/tanstack-react-start/server";
 
-  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  return {
-    supabase: supabaseAdmin,
-    userId,
-    claims: sessionClaims ?? {},
-  };
-}
+export const requireSupabaseAuth = createMiddleware({ type: "function" }).server(
+  async ({ next }) => {
+    const { userId, sessionClaims } = await auth();
+    if (!userId) throw new Error("Unauthorized");
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    return next({
+      context: {
+        supabase: supabaseAdmin,
+        userId,
+        claims: sessionClaims ?? {},
+      },
+    });
+  },
+);

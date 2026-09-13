@@ -1,6 +1,6 @@
-import { createFileRoute, useNavigate } from "@/lib/next-router-compat";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useServerFn } from "@/lib/next-server-fn";
+import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -26,8 +26,6 @@ const GOALS = ["Read more consistently", "Remember what I read", "Build a person
 function OnboardingPage() {
   return <RequireAuth><OnboardingForm /></RequireAuth>;
 }
-
-export { OnboardingPage };
 
 function OnboardingForm() {
   const navigate = useNavigate();

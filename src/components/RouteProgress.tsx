@@ -1,4 +1,5 @@
 import { useIsFetching, useIsMutating } from "@tanstack/react-query";
+import { useRouterState } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 
 /**
@@ -6,7 +7,7 @@ import { useEffect, useState } from "react";
  * user always sees that navigation or data work is in flight.
  */
 export function RouteProgress() {
-  const routerLoading = false;
+  const routerLoading = useRouterState({ select: (s) => s.status === "pending" || s.isLoading });
   const fetching = useIsFetching();
   const mutating = useIsMutating();
   const active = routerLoading || fetching > 0 || mutating > 0;

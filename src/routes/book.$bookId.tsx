@@ -1,6 +1,6 @@
-import { createFileRoute, Link, useNavigate, useParams } from "@/lib/next-router-compat";
+import { createFileRoute, Link, useNavigate, useParams } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useServerFn } from "@/lib/next-server-fn";
+import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -249,5 +249,3 @@ function BookPage() {
     </AppShell>
   );
 }
-
-export { BookPage };
