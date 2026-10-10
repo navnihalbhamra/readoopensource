@@ -1,4 +1,5 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
+import { NextResponse } from "next/server";
 
 const isProtectedRoute = createRouteMatcher([
   "/review(.*)",
@@ -11,17 +12,30 @@ const isProtectedRoute = createRouteMatcher([
   "/read(.*)",
 ]);
 
-// Until Clerk keys are configured there is nothing to authenticate against;
-// invoking `auth.protect()` in that state would 500 every protected page.
-const clerkConfigured = Boolean(
-  process.env["NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY"] || process.env["CLERK_PUBLISHABLE_KEY"],
-);
-
 export default clerkMiddleware(async (auth, req) => {
-  if (!clerkConfigured) return;
-  if (isProtectedRoute(req)) await auth.protect();
+  const clerkConfigured = Boolean(
+    process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY || process.env.CLERK_PUBLISHABLE_KEY
+  );
+
+  if (!clerkConfigured) {
+    return NextResponse.next();
+  }
+
+  if (isProtectedRoute(req)) {
+    const session = await auth();
+    if (!session.userId) {
+      return session.redirectToSignIn();
+    }
+  }
+
+  return NextResponse.next();
 });
 
 export const config = {
-  matcher: ["/((?!_next|.*\\..*).*)"],
+  matcher: [
+    // Skip Next.js internals and all static files, unless found in search params
+    "/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)",
+    // Always run for API routes
+    "/(api|trpc)(.*)",
+  ],
 };
