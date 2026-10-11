@@ -6,8 +6,10 @@
  *
  * Supported inputs:
  *  1. Kindle "My Clippings.txt"  (entries separated by a line of "=")
- *  2. CSV exports (Readwise / Goodreads / generic), header-driven
+ *  2. CSV exports (Kindle / platform exports / generic), header-driven
  */
+
+import { MAX_WORDS_PER_HIGHLIGHT } from "@/lib/plan";
 
 export interface ParsedHighlight {
   book_title: string;
@@ -96,6 +98,97 @@ function toIso(value: string | undefined | null): string | null {
   return Number.isNaN(date.getTime()) ? null : date.toISOString();
 }
 
+/** Count words separated by whitespace. */
+export function countWords(str: string): number {
+  return str.trim().split(/\s+/).filter(Boolean).length;
+}
+
+/**
+ * Split a long paragraph or multi-sentence passage into individual quotes,
+ * ensuring each quote stays under maxWords (defaults to MAX_WORDS_PER_HIGHLIGHT = 50).
+ * Prevents copy-pasting entire paragraphs to bypass rate limits or free preview allowances.
+ */
+export function bifurcateParagraph(text: string, maxWords = MAX_WORDS_PER_HIGHLIGHT): string[] {
+  const trimmed = text.trim();
+  if (!trimmed) return [];
+
+  if (countWords(trimmed) <= maxWords && !trimmed.includes("\n")) {
+    return [trimmed];
+  }
+
+  // Split into sentences using punctuation boundaries
+  const sentences = trimmed
+    .split(/(?<=[.!?…])\s+(?=[A-Z0-9"“'‘—])/g)
+    .map((s) => s.trim())
+    .filter(Boolean);
+
+  if (sentences.length <= 1 && countWords(trimmed) <= maxWords) {
+    return [trimmed];
+  }
+
+  const quotes: string[] = [];
+  let currentGroup: string[] = [];
+  let currentWords = 0;
+
+  for (const sentence of sentences) {
+    const sWords = countWords(sentence);
+
+    // If an individual sentence exceeds maxWords by itself, split it by clauses or words
+    if (sWords > maxWords) {
+      if (currentGroup.length > 0) {
+        quotes.push(currentGroup.join(" "));
+        currentGroup = [];
+        currentWords = 0;
+      }
+      const clauses = sentence
+        .split(/(?<=[;:,—])\s+/g)
+        .map((c) => c.trim())
+        .filter(Boolean);
+      let clauseGroup: string[] = [];
+      let clauseWords = 0;
+
+      for (const clause of clauses) {
+        const cWords = countWords(clause);
+        if (cWords > maxWords) {
+          if (clauseGroup.length > 0) {
+            quotes.push(clauseGroup.join(" "));
+            clauseGroup = [];
+            clauseWords = 0;
+          }
+          const words = clause.split(/\s+/).filter(Boolean);
+          for (let i = 0; i < words.length; i += maxWords) {
+            quotes.push(words.slice(i, i + maxWords).join(" "));
+          }
+        } else if (clauseWords + cWords <= maxWords) {
+          clauseGroup.push(clause);
+          clauseWords += cWords;
+        } else {
+          if (clauseGroup.length > 0) quotes.push(clauseGroup.join(" "));
+          clauseGroup = [clause];
+          clauseWords = cWords;
+        }
+      }
+      if (clauseGroup.length > 0) quotes.push(clauseGroup.join(" "));
+      continue;
+    }
+
+    if (currentWords + sWords <= maxWords) {
+      currentGroup.push(sentence);
+      currentWords += sWords;
+    } else {
+      if (currentGroup.length > 0) quotes.push(currentGroup.join(" "));
+      currentGroup = [sentence];
+      currentWords = sWords;
+    }
+  }
+
+  if (currentGroup.length > 0) {
+    quotes.push(currentGroup.join(" "));
+  }
+
+  return quotes.map((q) => cleanQuote(q)).filter((q) => q.length >= 2);
+}
+
 /**
  * Parse a Kindle "My Clippings.txt" file.
  * Each clipping is: title line, metadata line, blank line, body, then "=====".
@@ -119,14 +212,17 @@ export function parseKindleClippings(input: string): ParsedHighlight[] {
       /(?:page|Location|page\s+)\s*([\dxiv\-–]+)/i.exec(meta)?.[0]?.replace(/\s+/g, " ") ?? null;
     const addedOn = /Added on\s+(.+)$/i.exec(meta)?.[1] ?? null;
 
-    out.push({
-      book_title: title,
-      author,
-      text: body,
-      note: isNote ? body : null,
-      location,
-      highlighted_at: toIso(addedOn),
-    });
+    const quotes = bifurcateParagraph(body);
+    for (const q of quotes) {
+      out.push({
+        book_title: title,
+        author,
+        text: q,
+        note: isNote ? body : null,
+        location,
+        highlighted_at: toIso(addedOn),
+      });
+    }
   }
 
   return out;
@@ -177,14 +273,17 @@ export function parseHighlightsCsv(input: string): ParsedHighlight[] {
     const text = (cells[idx.text] ?? "").trim();
     if (!text) continue;
 
-    out.push({
-      text,
-      book_title: (idx.book_title !== -1 ? cells[idx.book_title] : "")?.trim() || "Unknown book",
-      author: (idx.author !== -1 ? cells[idx.author] : "")?.trim() || null,
-      note: (idx.note !== -1 ? cells[idx.note] : "")?.trim() || null,
-      location: (idx.location !== -1 ? cells[idx.location] : "")?.trim() || null,
-      highlighted_at: toIso(idx.highlighted_at !== -1 ? cells[idx.highlighted_at] : null),
-    });
+    const quotes = bifurcateParagraph(text);
+    for (const q of quotes) {
+      out.push({
+        text: q,
+        book_title: (idx.book_title !== -1 ? cells[idx.book_title] : "")?.trim() || "Unknown book",
+        author: (idx.author !== -1 ? cells[idx.author] : "")?.trim() || null,
+        note: (idx.note !== -1 ? cells[idx.note] : "")?.trim() || null,
+        location: (idx.location !== -1 ? cells[idx.location] : "")?.trim() || null,
+        highlighted_at: toIso(idx.highlighted_at !== -1 ? cells[idx.highlighted_at] : null),
+      });
+    }
   }
   return out;
 }
@@ -195,6 +294,9 @@ export function parseHighlightsCsv(input: string): ParsedHighlight[] {
  * Blocks are separated by blank lines. When a paste has no blank lines at all
  * (the common case: 20 quotes on 20 consecutive lines), each line that reads
  * like a standalone passage becomes its own highlight.
+ *
+ * If a block is an entire paragraph, it is bifurcated into individual quotes
+ * under the maximum word limit to protect against rate limits and enforce free allowances.
  *
  * Optional attribution on the last line of a block:
  *   "— Invisible Cities, Italo Calvino"  /  "- Sapiens (Yuval Noah Harari)"
@@ -232,7 +334,10 @@ export function parsePlainText(input: string): ParsedHighlight[] {
     const push = (raw: string) => {
       const text = cleanQuote(raw);
       if (text.length < 2) return;
-      out.push({ book_title, author, text, note: null, location: null, highlighted_at: null });
+      const quotes = bifurcateParagraph(text);
+      for (const q of quotes) {
+        out.push({ book_title, author, text: q, note: null, location: null, highlighted_at: null });
+      }
     };
 
     if (lines.length > 1 && looksLikeSeparateQuotes(lines)) {

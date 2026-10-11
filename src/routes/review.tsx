@@ -7,23 +7,54 @@ import { AppShell } from "@/components/AppShell";
 import { HighlightSkeletons } from "@/components/Loaders";
 import { BookCover } from "@/components/BookCover";
 import { RequireAuth } from "@/components/RequireAuth";
+import { useEffect } from "react";
 import { Reveal } from "@/components/Reveal";
 import { Spinner } from "@/components/Spinner";
 import { useReaderPrefs } from "@/hooks/useReaderPrefs";
+import { formatScheduleSummary } from "@/lib/digest-schedule";
 
 export function Review() {
   const { prefs, update } = useReaderPrefs();
+  const queryClient = useQueryClient();
+  const profile = useQuery({ queryKey: ["profile"], queryFn: useServerFn("getProfile") });
   const review = useQuery({ queryKey: ["review"], queryFn: useServerFn("getReview") });
   const highlights = useQuery({ queryKey: ["highlights"], queryFn: useServerFn("listHighlights") });
   const books = useQuery({ queryKey: ["books"], queryFn: useServerFn("listBooks") });
   const bookById = new Map((books.data ?? []).map((b) => [b.id, b]));
-  const queryClient = useQueryClient();
+
+  const claim = useMutation({
+    mutationFn: useServerFn("claimFounderPass"),
+    onSuccess: (res: { success?: boolean }) => {
+      if (res?.success) {
+        toast.success("Welcome to Founder Pass! You now have unlimited lifetime access.");
+        queryClient.invalidateQueries({ queryKey: ["profile"] });
+        queryClient.invalidateQueries({ queryKey: ["highlights"] });
+      }
+    },
+  });
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const checkoutId = params.get("checkout_id");
+      const upgraded = params.get("upgraded");
+      if (checkoutId || upgraded === "true") {
+        claim.mutate({ data: { checkoutId: checkoutId || undefined } });
+        const url = new URL(window.location.href);
+        url.searchParams.delete("checkout_id");
+        url.searchParams.delete("upgraded");
+        window.history.replaceState({}, "", url.pathname);
+      }
+    }
+  }, []);
+
   const removeHighlight = useMutation({
     mutationFn: useServerFn("deleteHighlight"),
     onSuccess: () => {
       toast.success("Highlight deleted");
       queryClient.invalidateQueries({ queryKey: ["highlights"] });
       queryClient.invalidateQueries({ queryKey: ["review"] });
+      queryClient.invalidateQueries({ queryKey: ["profile"] });
     },
     onError: (error: Error) => toast.error(error.message),
   });
@@ -31,13 +62,47 @@ export function Review() {
   return (
     <AppShell prefs={prefs} update={update} eyebrow="Review">
       <div className="pt-8 pb-6">
-        <p className="eyebrow">Daily review</p>
+        <p className="eyebrow">Remember what you read</p>
         <h1 className="mt-3 font-display text-3xl font-semibold leading-tight tracking-tight text-balance">
-          Today's highlights
+          Today's review
         </h1>
         <p className="mt-2 font-body text-sm text-muted-foreground">
-          {total} highlights saved · a few surface here each visit.
+          {total} highlights saved · a few quiet quotes surface each day to keep ideas fresh.
         </p>
+
+        {/* Memory rhythm status banner */}
+        {profile.data && (
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border bg-surface/50 px-4 py-3 text-xs">
+            <div className="flex items-center gap-2">
+              <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="text-muted-foreground">Memory Routine:</span>
+              <span className="font-medium text-foreground">
+                {profile.data.digest_enabled !== false
+                  ? formatScheduleSummary(profile.data.schedule)
+                  : "Email digest is paused"}
+              </span>
+            </div>
+            <Link
+              href="/settings"
+              className="text-xs text-primary underline-offset-4 hover:underline font-medium"
+            >
+              Change time or frequency →
+            </Link>
+          </div>
+        )}
+
+        {/* Free preview banner */}
+        {profile.data?.entitlements && !profile.data.entitlements.isPro && (
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-primary/20 bg-primary/5 px-4 py-2.5 text-xs">
+            <span className="text-muted-foreground">
+              Free preview: <strong className="text-foreground">{profile.data.entitlements.highlightCount} / 5</strong> quotes stored.
+            </span>
+            <Link href="/pricing" className="font-semibold text-primary hover:underline">
+              Unlock Founder Pass ($49 lifetime) →
+            </Link>
+          </div>
+        )}
+
         <div className="mt-5 flex gap-2">
           <button
             className="chrome-btn"
@@ -45,7 +110,7 @@ export function Review() {
             onClick={() => review.refetch()}
           >
             {review.isFetching && <Spinner label="Shuffling" />}
-            <span>{review.isFetching ? "Shuffling…" : "Shuffle"}</span>
+            <span>{review.isFetching ? "Shuffling…" : "Shuffle quotes"}</span>
           </button>
           <Link href="/import" className="brass-btn">
             Import highlights
@@ -82,7 +147,7 @@ export function Review() {
                       <div className="mt-4 flex items-center justify-between gap-3 border-t border-border/70 pt-3">
                         {book ? (
                           <Link
-                            href={`/book/book.id`}
+                            href={`/book/${book.id}`}
                             className="min-w-0 truncate text-[11px] uppercase tracking-[0.16em] text-muted-foreground hover:text-foreground"
                           >
                             {meta}

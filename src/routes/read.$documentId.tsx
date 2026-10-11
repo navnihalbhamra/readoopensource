@@ -57,7 +57,18 @@ export function Reader({ documentId }: { documentId: string }) {
       queryClient.invalidateQueries({ queryKey: ["highlights"] });
       queryClient.invalidateQueries({ queryKey: ["review"] });
     },
-    onError: (error: Error) => toast.error(error.message),
+    onError: (error: Error) => {
+      toast.error(error.message, {
+        action: error.message.includes("Founder Pass")
+          ? {
+              label: "Get Pass",
+              onClick: () => {
+                window.location.href = "/pricing";
+              },
+            }
+          : undefined,
+      });
+    },
   });
 
   const persistProgress = useServerFn("saveProgress");

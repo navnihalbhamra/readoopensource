@@ -79,7 +79,7 @@ export function Books() {
             className="group relative book-item"
             style={{ animationDelay: `${index * 55}ms` }}
           >
-            <Link href={`/book/book.id`} className="block">
+            <Link href={`/book/${book.id}`} className="block">
               <BookCover
                 title={book.title}
                 author={book.author}

@@ -8,8 +8,10 @@ import { AppShell } from "@/components/AppShell";
 import { RequireAuth } from "@/components/RequireAuth";
 import { Spinner } from "@/components/Spinner";
 import { TypeControls } from "@/components/TypeControls";
+import { DigestScheduleSettings } from "@/components/DigestScheduleSettings";
 import { useReaderPrefs } from "@/hooks/useReaderPrefs";
 import { planLabel } from "@/lib/plan";
+import { DEFAULT_DIGEST_SCHEDULE } from "@/lib/digest-schedule";
 
 export function Settings() {
   const { prefs, update } = useReaderPrefs();
@@ -28,14 +30,6 @@ export function Settings() {
     },
     onError: (error: Error) => toast.error(error.message),
   });
-  const [enabled, setEnabled] = useState(true);
-  const [frequency, setFrequency] = useState<"daily" | "weekly">("daily");
-  useEffect(() => {
-    if (profile.data) {
-      setEnabled(profile.data.digest_enabled ?? true);
-      setFrequency((profile.data.digest_frequency ?? "daily") as "daily" | "weekly");
-    }
-  }, [profile.data]);
   // Sync Clerk's profile once on mount; `mutate` is stable across renders.
   const { mutate: syncMutate } = sync;
   useEffect(() => {
@@ -62,7 +56,6 @@ export function Settings() {
     },
     onError: (error: Error) => toast.error(error.message),
   });
-  const apiKey = profile.data?.api_key ?? "";
   const emails = profile.data?.linked_emails ?? [];
   const entitlements = profile.data?.entitlements;
   return (
@@ -85,156 +78,59 @@ export function Settings() {
             </h2>
             <p className="mt-1.5 font-body text-[13px] text-muted-foreground">
               {entitlements?.highlightLimit === null
-                ? `${entitlements.highlightCount} highlights saved · unlimited archive`
-                : `${entitlements?.highlightCount ?? 0} of ${entitlements?.highlightLimit ?? 100} highlights saved`}
+                ? `${entitlements.highlightCount} highlights saved · unlimited lifetime access`
+                : `${entitlements?.highlightCount ?? 0} of ${entitlements?.highlightLimit ?? 5} free preview highlights saved`}
             </p>
           </div>
-          <Link href="/pricing" className="brass-btn">
-            View plans
-          </Link>
+          {entitlements?.highlightLimit !== null ? (
+            <Link href="/pricing" className="brass-btn">
+              Get Founder Pass ($49)
+            </Link>
+          ) : (
+            <span className="rounded-full border border-accent/40 bg-accent/10 px-3 py-1 text-xs font-semibold text-accent">
+              Lifetime Member
+            </span>
+          )}
         </div>
         {entitlements?.highlightLimit !== null && (
           <div className="mt-5 h-1.5 overflow-hidden rounded-full bg-inkwash">
             <div
               className="h-full rounded-full bg-primary transition-all duration-700"
               style={{
-                width: `${Math.min(100, ((entitlements?.highlightCount ?? 0) / (entitlements?.highlightLimit ?? 100)) * 100)}%`,
+                width: `${Math.min(100, ((entitlements?.highlightCount ?? 0) / (entitlements?.highlightLimit ?? 5)) * 100)}%`,
               }}
             />
           </div>
         )}
       </section>
       <section className="border-t border-border py-7">
-        <h2 className="font-display text-xl font-semibold tracking-tight">Review digest</h2>
+        <h2 className="font-display text-xl font-semibold tracking-tight">Memory routine & schedule</h2>
         <p className="mt-1.5 font-body text-[13px] text-muted-foreground">
-          A short email with 3–5 random highlights from your archive.
+          Reado exists for one purpose: helping you remember what you read. Customize your delivery
+          time, number of emails, and how many quotes to reflect upon.
         </p>
-        <label className="mt-4 flex items-center gap-2.5">
-          <input
-            type="checkbox"
-            checked={enabled}
-            onChange={(e) => setEnabled(e.target.checked)}
-            className="size-4 accent-primary"
+        <div className="mt-6">
+          <DigestScheduleSettings
+            initialEnabled={profile.data?.digest_enabled ?? true}
+            initialSchedule={profile.data?.schedule ?? DEFAULT_DIGEST_SCHEDULE}
+            destinationEmail={profile.data?.digest_email ?? profile.data?.email ?? ""}
+            linkedEmails={emails}
+            isPendingSave={save.isPending}
+            isPendingTest={testSend.isPending}
+            lastDigestAt={profile.data?.last_digest_at}
+            onSave={(payload) => save.mutate({ data: payload })}
+            onSendTest={(count) => testSend.mutate({ data: { highlightsCount: count } })}
           />
-          <span className="font-body text-[13px]">Email me a review digest</span>
-        </label>
-        <div className="mt-3 flex gap-1.5">
-          {(["daily", "weekly"] as const).map((option) => (
-            <button
-              key={option}
-              onClick={() => setFrequency(option)}
-              className={frequency === option ? "brass-btn" : "chrome-btn"}
-            >
-              {option === "daily" ? "Daily" : "Weekly"}
-            </button>
-          ))}
         </div>
-        <button
-          className="brass-btn mt-5"
-          disabled={save.isPending}
-          onClick={() =>
-            save.mutate({ data: { digest_enabled: enabled, digest_frequency: frequency } })
-          }
-        >
-          {save.isPending && <Spinner label="Saving digest settings" />}
-          {save.isPending ? "Saving…" : "Save digest settings"}
-        </button>
-        {profile.data?.last_digest_at && (
-          <p className="mt-3 text-[11px] text-muted-foreground">
-            Last sent {new Date(profile.data.last_digest_at).toLocaleString()}
-          </p>
-        )}
       </section>
-      <section className="border-t border-border py-7">
-        <h2 className="font-display text-xl font-semibold tracking-tight">Email delivery</h2>
+      <section className="border-t border-border py-7 pb-16">
+        <h2 className="font-display text-xl font-semibold tracking-tight">Reading comfort</h2>
         <p className="mt-1.5 font-body text-[13px] text-muted-foreground">
-          Clerk keeps your verified Google and email addresses in sync. Choose where Reado should
-          send your reviews.
-        </p>
-        <label
-          className="mt-4 block text-[11px] uppercase tracking-[0.14em] text-muted-foreground"
-          htmlFor="digest-email"
-        >
-          Review inbox
-        </label>
-        <select
-          id="digest-email"
-          value={profile.data?.digest_email ?? ""}
-          onChange={(event) => changeEmail.mutate({ data: { email: event.target.value } })}
-          disabled={changeEmail.isPending || emails.length === 0}
-          className="mt-2 w-full rounded-lg border border-border bg-surface px-3 py-2.5 text-sm text-foreground outline-none transition-colors focus:border-foreground"
-        >
-          <option value="" disabled>
-            Select a verified email
-          </option>
-          {emails.map((email) => (
-            <option key={email} value={email}>
-              {email}
-            </option>
-          ))}
-        </select>
-        <dl className="mt-5 space-y-2 font-body text-[13px]">
-          <div className="flex justify-between gap-4">
-            <dt className="text-muted-foreground">From</dt>
-            <dd>Reado · notify.reado.lol</dd>
-          </div>
-          <div className="flex justify-between gap-4">
-            <dt className="text-muted-foreground">Schedule</dt>
-            <dd>
-              {enabled
-                ? frequency === "daily" && entitlements?.canUseDailyDigest
-                  ? "Once a day"
-                  : "Once a week"
-                : "Paused"}
-            </dd>
-          </div>
-          <div className="flex justify-between gap-4">
-            <dt className="text-muted-foreground">Contents</dt>
-            <dd>3–5 random highlights</dd>
-          </div>
-        </dl>
-        <button
-          className="chrome-btn mt-4"
-          disabled={testSend.isPending}
-          onClick={() => testSend.mutate(undefined)}
-        >
-          {testSend.isPending && <Spinner label="Sending digest" />}
-          {testSend.isPending ? "Sending…" : "Send me one now"}
-        </button>
-        <p className="mt-3 text-[11px] text-muted-foreground">
-          Unsubscribe links are handled automatically; turning the digest off above also stops
-          delivery.
-        </p>
-      </section>
-      <section className="border-t border-border py-7">
-        <h2 className="font-display text-xl font-semibold tracking-tight">Reading defaults</h2>
-        <p className="mt-1.5 font-body text-[13px] text-muted-foreground">
-          Applies everywhere and persists on this device.
+          Calm typography and measure settings for focused reading.
         </p>
         <div className="mt-4">
           <TypeControls prefs={prefs} update={update} />
         </div>
-      </section>
-      <section className="border-t border-border py-7 pb-16">
-        <h2 className="font-display text-xl font-semibold tracking-tight">Highlight API</h2>
-        <p className="mt-1.5 font-body text-[13px] text-muted-foreground">
-          POST highlights from any script or service with your key.
-        </p>
-        <div className="mt-4 flex items-center gap-2">
-          <code className="min-w-0 flex-1 truncate rounded-lg bg-surface px-3 py-2.5 font-mono text-[12px] ring-1 ring-border">
-            {apiKey || "—"}
-          </code>
-          <button
-            className="chrome-btn shrink-0"
-            onClick={() => {
-              navigator.clipboard.writeText(apiKey);
-              toast.success("API key copied");
-            }}
-          >
-            Copy
-          </button>
-        </div>
-        <pre className="mt-4 overflow-x-auto rounded-lg bg-surface p-4 font-mono text-[11px] leading-relaxed ring-1 ring-border">{`curl -X POST ${typeof window !== "undefined" ? window.location.origin : ""}/api/public/highlights \\\n  -H "content-type: application/json" \\\n  -H "x-api-key: ${apiKey || "YOUR_KEY"}" \\\n  -d '{"book_title":"Sapiens","author":"Yuval Noah Harari","text":"..."}'`}</pre>
       </section>
     </AppShell>
   );

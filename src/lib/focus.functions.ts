@@ -2,7 +2,8 @@ import { z } from "zod";
 
 import type { RpcContext, RpcRegistry, ServerSupabase } from "@/lib/rpc";
 import { FREE_HIGHLIGHT_LIMIT, entitlementsFor } from "@/lib/plan";
-import { dedupe, parseHighlightFile } from "@/lib/parse-highlights";
+import { bifurcateParagraph, dedupe, parseHighlightFile } from "@/lib/parse-highlights";
+import { parseDigestSchedule, DEFAULT_DIGEST_SCHEDULE } from "@/lib/digest-schedule";
 
 async function getEntitlements(supabase: ServerSupabase, userId: string) {
   try {
@@ -123,39 +124,67 @@ export async function saveHighlight(ctx: RpcContext, data: unknown) {
     })
     .parse(data);
   const text = input.text.trim();
-  const { data: existing } = await ctx.supabase
-    .from("highlights")
-    .select("*")
-    .eq("user_id", ctx.userId)
-    .eq("book_title", input.book_title)
-    .eq("text", text)
-    .maybeSingle();
-  if (existing) return existing;
+  const quotes = bifurcateParagraph(text);
+  if (quotes.length === 0) throw new Error("Highlight text is empty");
+
   const entitlements = await getEntitlements(ctx.supabase, ctx.userId);
   if (
     entitlements.highlightLimit !== null &&
     entitlements.highlightCount >= entitlements.highlightLimit
   ) {
     throw new Error(
-      `Free plan limit reached (${FREE_HIGHLIGHT_LIMIT} highlights). Upgrade to keep adding highlights.`,
+      `Free preview limit reached (${FREE_HIGHLIGHT_LIMIT} highlights). Upgrade to the Founder Pass ($49 lifetime) for unlimited highlights.`,
     );
   }
-  const { data: row, error } = await ctx.supabase
+
+  // Filter out any quotes that already exist for this book
+  const { data: known } = await ctx.supabase
     .from("highlights")
-    .insert({
-      user_id: ctx.userId,
-      document_id: input.document_id ?? null,
-      book_title: input.book_title,
-      author: input.author ?? null,
-      text,
-      note: input.note ?? null,
-      location: input.location ?? null,
-      source: "reader",
-    })
-    .select("*")
-    .single();
+    .select("text")
+    .eq("user_id", ctx.userId)
+    .eq("book_title", input.book_title);
+  const knownSet = new Set((known ?? []).map((k) => k.text));
+  const freshQuotes = quotes.filter((q) => !knownSet.has(q));
+
+  if (freshQuotes.length === 0) {
+    const { data: existing } = await ctx.supabase
+      .from("highlights")
+      .select("*")
+      .eq("user_id", ctx.userId)
+      .eq("book_title", input.book_title)
+      .eq("text", quotes[0]!)
+      .maybeSingle();
+    return existing;
+  }
+
+  const allowedQuotes =
+    entitlements.highlightLimit !== null
+      ? freshQuotes.slice(0, Math.max(0, entitlements.highlightLimit - entitlements.highlightCount))
+      : freshQuotes;
+
+  if (allowedQuotes.length === 0) {
+    throw new Error(
+      `Free preview limit reached (${FREE_HIGHLIGHT_LIMIT} highlights). Upgrade to the Founder Pass ($49 lifetime) for unlimited highlights.`,
+    );
+  }
+
+  const rowsToInsert = allowedQuotes.map((q) => ({
+    user_id: ctx.userId,
+    document_id: input.document_id ?? null,
+    book_title: input.book_title,
+    author: input.author ?? null,
+    text: q,
+    note: input.note ?? null,
+    location: input.location ?? null,
+    source: "reader",
+  }));
+
+  const { data: rows, error } = await ctx.supabase
+    .from("highlights")
+    .insert(rowsToInsert)
+    .select("*");
   if (error) throw new Error(error.message);
-  return row;
+  return rows?.[0];
 }
 
 export async function deleteHighlight(ctx: RpcContext, data: unknown) {
@@ -236,7 +265,7 @@ export async function getProfile(ctx: RpcContext, _data: unknown) {
       ctx.supabase
         .from("profiles")
         .select(
-          "id, email, digest_email, linked_emails, display_name, reading_goals, onboarding_completed, digest_enabled, digest_frequency, last_digest_at, api_key, plan, plan_source, plan_renews_at",
+          "id, email, digest_email, linked_emails, display_name, reading_goals, onboarding_completed, digest_enabled, digest_frequency, last_digest_at, plan, plan_source, plan_renews_at",
         )
         .eq("id", ctx.userId)
         .maybeSingle(),
@@ -246,8 +275,10 @@ export async function getProfile(ctx: RpcContext, _data: unknown) {
         .eq("user_id", ctx.userId),
     ]);
     if (profile.error) throw new Error(profile.error.message);
+    const schedule = parseDigestSchedule(profile.data?.digest_frequency);
     return {
       ...profile.data,
+      schedule,
       entitlements: entitlementsFor(profile.data?.plan, highlights.count ?? 0),
     };
   } catch (err) {
@@ -259,6 +290,7 @@ export async function getProfile(ctx: RpcContext, _data: unknown) {
       linked_emails: [],
       display_name: null,
       plan: "free",
+      schedule: DEFAULT_DIGEST_SCHEDULE,
       entitlements: entitlementsFor("free", 0),
     };
   }
@@ -266,34 +298,58 @@ export async function getProfile(ctx: RpcContext, _data: unknown) {
 
 export async function updateDigestSettings(ctx: RpcContext, data: unknown) {
   const input = z
-    .object({ digest_enabled: z.boolean(), digest_frequency: z.enum(["daily", "weekly"]) })
+    .object({
+      digest_enabled: z.boolean(),
+      digest_frequency: z.string().min(1).max(2000),
+      digest_email: z.string().email().optional(),
+    })
     .parse(data);
-  const { error } = await ctx.supabase.from("profiles").update(input).eq("id", ctx.userId);
+  const patch: {
+    digest_enabled: boolean;
+    digest_frequency: string;
+    digest_email?: string;
+  } = {
+    digest_enabled: input.digest_enabled,
+    digest_frequency: input.digest_frequency,
+  };
+  if (input.digest_email) patch.digest_email = input.digest_email;
+  const { error } = await ctx.supabase.from("profiles").update(patch).eq("id", ctx.userId);
   if (error) throw new Error(error.message);
   return { ok: true };
 }
 
-export async function sendTestDigest(ctx: RpcContext, _data: unknown) {
+export async function sendTestDigest(ctx: RpcContext, data: unknown) {
+  const input = z
+    .object({
+      highlightsCount: z.number().min(1).max(10).optional(),
+    })
+    .optional()
+    .parse(data);
+
   const { data: profile } = await ctx.supabase
     .from("profiles")
-    .select("email, digest_email")
+    .select("email, digest_email, digest_frequency")
     .eq("id", ctx.userId)
     .maybeSingle();
   const recipient = profile?.digest_email ?? profile?.email;
   if (!recipient) throw new Error("No email address on your account");
+
+  const schedule = parseDigestSchedule(profile?.digest_frequency);
+  const targetCount = input?.highlightsCount ?? schedule.highlightsPerEmail;
+
   const { data: pool } = await ctx.supabase
     .from("highlights")
     .select("text, note, book_title, author, location")
     .eq("user_id", ctx.userId)
     .limit(500);
   const { pickDigestHighlights, sendDigestEmail } = await import("@/lib/digest.server");
-  const picks = pickDigestHighlights((pool ?? []) as never);
+  const picks = pickDigestHighlights((pool ?? []) as never, targetCount);
   if (picks.length === 0) throw new Error("Import a few highlights first");
   const appUrl =
     process.env["NEXT_PUBLIC_APP_URL"] ?? process.env["VITE_PUBLIC_APP_URL"] ?? "https://reado.lol";
   const result = await sendDigestEmail(recipient, picks, appUrl);
   if (!result.sent) return { sent: false as const, reason: result.reason };
-  return { sent: true as const, to: recipient };
+  return { sent: true as const, to: recipient, count: picks.length };
 }
 
 export async function getReview(ctx: RpcContext, _data: unknown) {
@@ -524,6 +580,26 @@ export async function updateHighlightNote(ctx: RpcContext, data: unknown) {
   return { ok: true };
 }
 
+export async function claimFounderPass(ctx: RpcContext, data: unknown) {
+  const input = z.object({ checkoutId: z.string().optional() }).parse(data);
+  if (input.checkoutId) {
+    try {
+      const { getCheckoutSession } = await import("@/lib/polar.server");
+      const session = await getCheckoutSession(input.checkoutId);
+      if (session) {
+        await ctx.supabase
+          .from("profiles")
+          .update({ plan: "lifetime", plan_source: "polar" })
+          .eq("id", ctx.userId);
+        return { success: true, plan: "lifetime" };
+      }
+    } catch (err) {
+      console.error("Failed to verify checkout session:", err);
+    }
+  }
+  return { success: false };
+}
+
 export const serverFunctions = {
   listDocuments: { method: "GET", handler: listDocuments },
   getDocument: { method: "GET", handler: getDocument },
@@ -536,6 +612,7 @@ export const serverFunctions = {
   deleteHighlight: { method: "POST", handler: deleteHighlight },
   importHighlights: { method: "POST", handler: importHighlights },
   getProfile: { method: "GET", handler: getProfile },
+  claimFounderPass: { method: "POST", handler: claimFounderPass },
   updateDigestSettings: { method: "POST", handler: updateDigestSettings },
   sendTestDigest: { method: "POST", handler: sendTestDigest },
   getReview: { method: "GET", handler: getReview },
@@ -545,3 +622,4 @@ export const serverFunctions = {
   updateBook: { method: "POST", handler: updateBook },
   enrichBooks: { method: "POST", handler: enrichBooks },
 } satisfies RpcRegistry;
+

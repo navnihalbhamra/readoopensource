@@ -4,7 +4,7 @@ import type { RpcContext, RpcRegistry } from "@/lib/rpc";
 
 const onboardingSchema = z.object({
   display_name: z.string().trim().min(1).max(120),
-  digest_frequency: z.enum(["daily", "weekly"]),
+  digest_frequency: z.string().trim().min(1).max(2000),
   reading_goals: z.array(z.string().trim().min(1).max(80)).max(6),
 });
 

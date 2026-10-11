@@ -1,5 +1,6 @@
 import * as React from "react";
-import { useMutation, useQueryClient } from "@/lib/data";
+import Link from "next/link";
+import { useMutation, useQuery, useQueryClient } from "@/lib/data";
 import { useServerFn } from "@/lib/next-server-fn";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
@@ -10,10 +11,16 @@ import { Spinner } from "@/components/Spinner";
 import { useReaderPrefs } from "@/hooks/useReaderPrefs";
 
 import { parseHighlightFile } from "@/lib/parse-highlights";
+import { MAX_WORDS_PER_HIGHLIGHT } from "@/lib/plan";
 
 export function ImportPage() {
   const { prefs, update } = useReaderPrefs();
   const queryClient = useQueryClient();
+  const profile = useQuery({ queryKey: ["profile"], queryFn: useServerFn("getProfile") });
+  const entitlements = profile.data?.entitlements;
+  const isFree = entitlements?.highlightLimit !== null;
+  const isAtLimit = isFree && (entitlements?.remaining ?? 0) <= 0;
+
   const fileRef = useRef<HTMLInputElement>(null);
   const [pasted, setPasted] = useState("");
   const [title, setTitle] = useState("");
@@ -25,18 +32,31 @@ export function ImportPage() {
 
   const runImport = useMutation({
     mutationFn: useServerFn("importHighlights"),
-    onSuccess: async (result: { parsed: number; imported: number; skipped: number }) => {
+    onSuccess: async (result: {
+      parsed: number;
+      imported: number;
+      skipped: number;
+      limit_reached?: boolean;
+    }) => {
       setStatusMsg(null);
       if (result.parsed === 0) {
-        toast.error("Nothing recognisable in that text — try one quote per paragraph or upload a Readwise/Kindle CSV.");
+        toast.error(
+          "Nothing recognisable in that text — try one quote per paragraph or upload a Kindle clippings or CSV export.",
+        );
         return;
       }
       toast.success(
-        `Imported ${result.imported} of ${result.parsed} highlights (${result.skipped} already saved)`,
+        `Imported ${result.imported} of ${result.parsed} highlights (${result.skipped} already saved or past limit)`,
       );
+      if (result.limit_reached) {
+        toast.warning(
+          "Free preview limit reached (5 highlights). Unlock the Founder Pass ($49 lifetime) for unlimited highlights!",
+        );
+      }
       setPasted("");
       if (fileRef.current) fileRef.current.value = "";
       queryClient.invalidateQueries({ queryKey: ["highlights"] });
+      queryClient.invalidateQueries({ queryKey: ["profile"] });
       queryClient.invalidateQueries({ queryKey: ["review"] });
 
       // Run book enrichment asynchronously in background without blocking import completion
@@ -61,6 +81,7 @@ export function ImportPage() {
       toast.success("Highlight saved");
       setText("");
       queryClient.invalidateQueries({ queryKey: ["highlights"] });
+      queryClient.invalidateQueries({ queryKey: ["profile"] });
       queryClient.invalidateQueries({ queryKey: ["review"] });
       void runEnrich({ data: {} })
         .then(() => queryClient.invalidateQueries({ queryKey: ["books"] }))
@@ -77,7 +98,7 @@ export function ImportPage() {
     try {
       const parsedItems = parseHighlightFile(file.name, content);
       if (parsedItems.length > 0) {
-        setStatusMsg(`Parsed ${parsedItems.length} highlights instantly. Saving to your library…`);
+        setStatusMsg(`Parsed ${parsedItems.length} highlights. Saving to your library…`);
       }
     } catch {
       // fallback
@@ -93,10 +114,40 @@ export function ImportPage() {
           Import highlights
         </h1>
         <p className="mt-2 font-body text-sm text-muted-foreground">
-          Kindle <code className="text-foreground/80">My Clippings.txt</code>, Readwise CSV, and Goodreads exports are
-          parsed and de-duplicated automatically at high speed.
+          Kindle <code className="text-foreground/80">My Clippings.txt</code> and CSV exports from other platforms are
+          parsed, split into clean quotes, and de-duplicated automatically at high speed.
         </p>
       </div>
+
+      {/* Free tier usage and paywall banner */}
+      {isFree && (
+        <div className={`mb-6 rounded-xl border p-5 transition-all ${
+          isAtLimit
+            ? "border-2 border-accent bg-accent/10 ring-1 ring-accent/30"
+            : "border-border bg-surface/60"
+        }`}>
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="font-display text-xs font-semibold uppercase tracking-wider text-accent">
+                  {isAtLimit ? "Free Preview Limit Reached" : "Free Preview Allowance"}
+                </span>
+                <span className="rounded bg-accent/20 px-2 py-0.5 text-[11px] font-semibold text-accent">
+                  {entitlements?.highlightCount ?? 0} / {entitlements?.highlightLimit ?? 5} highlights used
+                </span>
+              </div>
+              <p className="mt-1.5 font-body text-xs text-muted-foreground">
+                {isAtLimit
+                  ? "You've saved all 5 free preview highlights. Unlock the Founder Pass ($49 lifetime) for unlimited highlights forever."
+                  : "Free preview includes up to 5 highlights (max 50 words each) to test your room and email digests."}
+              </p>
+            </div>
+            <Link href="/pricing" className="brass-btn shrink-0">
+              Get Founder Pass ($49)
+            </Link>
+          </div>
+        </div>
+      )}
 
       <section className="pb-16">
         {statusMsg && (
@@ -118,26 +169,31 @@ export function ImportPage() {
             {runImport.isPending ? "Processing highlights at full speed…" : "Choose a clippings or CSV file"}
           </span>
           <span className="mt-1 block font-body text-[12px] text-muted-foreground">
-            Kindle (.txt), Readwise export (.csv), Goodreads (.csv) · instant parsing
+            Kindle (.txt), platform export (.csv), Goodreads (.csv) · instant parsing
           </span>
         </label>
 
         <div className="mt-4 rounded-xl border border-border/70 bg-surface/40 p-4">
           <div className="flex items-center gap-2">
             <span className="font-display text-xs font-semibold uppercase tracking-wider text-accent">
-              Switching from Readwise?
+              Switching from another platform?
             </span>
           </div>
           <p className="mt-1 font-body text-xs text-muted-foreground leading-relaxed">
-            In Readwise, go to <strong>Export &rarr; CSV</strong>. Drop the exported CSV right here.
+            Export your highlights as a CSV from your current highlight app or service. Drop the exported CSV right here.
             All your books, quotes, notes, and dates are preserved and deduplicated automatically.
           </p>
         </div>
 
         <div className="mt-6">
-          <p className="mb-2 text-[11px] font-medium text-muted-foreground">
-            Or paste the file contents
-          </p>
+          <div className="mb-2 flex items-center justify-between">
+            <p className="text-[11px] font-medium text-muted-foreground">
+              Or paste the file contents
+            </p>
+            <span className="text-[11px] text-muted-foreground/80">
+              Paragraphs are automatically bifurcated into quotes (≤{MAX_WORDS_PER_HIGHLIGHT} words)
+            </span>
+          </div>
           <textarea
             value={pasted}
             onChange={(e) => setPasted(e.target.value)}
@@ -160,7 +216,8 @@ export function ImportPage() {
         <div className="mt-10 border-t border-border pt-7">
           <h2 className="font-display text-xl font-semibold tracking-tight">Add one by hand</h2>
           <p className="mt-1.5 font-body text-[13px] text-muted-foreground">
-            Type a passage and it lands straight in your archive and review rotation.
+            Type a passage and it lands straight in your archive and review rotation. Longer paragraphs
+            are automatically bifurcated into little quotes under {MAX_WORDS_PER_HIGHLIGHT} words.
           </p>
 
           <div className="mt-4 grid gap-2 sm:grid-cols-2">
@@ -205,3 +262,4 @@ export function ImportPage() {
     </AppShell>
   );
 }
+

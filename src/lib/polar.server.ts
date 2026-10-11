@@ -17,30 +17,50 @@ export interface CheckoutSession {
  * Create a Polar checkout session
  */
 export async function createCheckoutSession(
-  productId: string,
+  productId?: string,
   successUrl?: string,
+  userId?: string,
 ): Promise<CheckoutSession> {
   const accessToken = process.env["POLAR_ACCESS_TOKEN"];
   if (!accessToken) {
     throw new Error("POLAR_ACCESS_TOKEN is not set");
   }
 
-  const polarSuccessUrl = successUrl || process.env["POLAR_SUCCESS_URL"];
-  if (!polarSuccessUrl) {
-    throw new Error("POLAR_SUCCESS_URL is not set");
+  const effectiveProductId =
+    productId || process.env["POLAR_PRODUCT_ID"] || "94af6917-db05-46d6-b84a-c6c6e8744ea6";
+
+  const appUrl =
+    process.env["NEXT_PUBLIC_APP_URL"] ??
+    process.env["VITE_PUBLIC_APP_URL"] ??
+    "https://reado.lol";
+
+  let polarSuccessUrl =
+    successUrl ||
+    process.env["POLAR_SUCCESS_URL"] ||
+    `${appUrl}/review?upgraded=true&checkout_id={CHECKOUT_ID}`;
+
+  if (polarSuccessUrl.startsWith("/")) {
+    polarSuccessUrl = `${appUrl}${polarSuccessUrl}`;
   }
 
   try {
+    const payload: Record<string, unknown> = {
+      product_id: effectiveProductId,
+      success_url: polarSuccessUrl,
+    };
+
+    if (userId) {
+      payload["metadata"] = { userId };
+      payload["customer_metadata"] = { userId };
+    }
+
     const response = await fetch(`${POLAR_API_URL}/checkouts`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${accessToken}`,
       },
-      body: JSON.stringify({
-        productId,
-        successUrl: polarSuccessUrl,
-      }),
+      body: JSON.stringify(payload),
     });
 
     if (!response.ok) {
@@ -49,7 +69,13 @@ export async function createCheckoutSession(
     }
 
     const data = await response.json();
-    return data as CheckoutSession;
+    return {
+      id: data.id,
+      clientSecret: data.client_secret ?? null,
+      url: data.url ?? null,
+      successUrl: data.success_url ?? polarSuccessUrl,
+      productId: data.product_id ?? effectiveProductId,
+    };
   } catch (error) {
     console.error("Failed to create Polar checkout:", error);
     throw error;

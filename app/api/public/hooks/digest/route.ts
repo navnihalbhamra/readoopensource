@@ -3,6 +3,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { authenticateCronRequest } from "@/integrations/supabase/cron-auth";
 import { pickDigestHighlights, sendDigestEmail, type DigestHighlight } from "@/lib/digest.server";
 
+import { parseDigestSchedule } from "@/lib/digest-schedule";
+
 const BATCH_SIZE = 25;
 
 export async function POST(request: NextRequest) {
@@ -32,21 +34,22 @@ export async function POST(request: NextRequest) {
       skipped++;
       continue;
     }
-    const isPro = profile.plan === "pro" || profile.plan === "lifetime";
-    const intervalMs =
-      isPro && profile.digest_frequency === "daily" ? 20 * 3600_000 : 7 * 24 * 3600_000;
+
+    const schedule = parseDigestSchedule(profile.digest_frequency);
+    const intervalMs = Math.floor((7 / Math.max(1, schedule.emailsPerWeek)) * 24 * 3600_000 * 0.85);
     const last = profile.last_digest_at ? new Date(profile.last_digest_at).getTime() : 0;
     if (now - last < intervalMs) {
       skipped++;
       continue;
     }
+
     const { data: pool } = await supabaseAdmin
       .from("highlights")
       .select("text, note, book_title, author, location")
       .eq("user_id", profile.id)
       .limit(500);
-    const picks = pickDigestHighlights((pool ?? []) as DigestHighlight[]);
-    if (picks.length < 3) {
+    const picks = pickDigestHighlights((pool ?? []) as DigestHighlight[], schedule.highlightsPerEmail);
+    if (picks.length < 1) {
       skipped++;
       continue;
     }

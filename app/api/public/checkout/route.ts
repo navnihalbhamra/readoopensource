@@ -5,7 +5,7 @@ import { createCheckoutSession } from "@/lib/polar.server";
 import { z } from "zod";
 
 const checkoutSchema = z.object({
-  productId: z.string().min(1),
+  productId: z.string().optional(),
   successUrl: z.string().optional(),
 });
 
@@ -14,11 +14,11 @@ export async function POST(request: NextRequest) {
     const { userId } = await auth();
     if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    let body: unknown;
+    let body: unknown = {};
     try {
       body = await request.json();
     } catch {
-      return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+      // Empty body is acceptable; defaults to Founder Pass
     }
 
     const parsed = checkoutSchema.safeParse(body);
@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
       );
 
     const { productId, successUrl } = parsed.data;
-    const session = await createCheckoutSession(productId, successUrl);
+    const session = await createCheckoutSession(productId, successUrl, userId);
 
     return NextResponse.json({
       success: true,
