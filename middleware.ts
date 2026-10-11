@@ -12,24 +12,30 @@ const isProtectedRoute = createRouteMatcher([
   "/read(.*)",
 ]);
 
-export default clerkMiddleware(async (auth, req) => {
-  const clerkConfigured = Boolean(
-    process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY || process.env.CLERK_PUBLISHABLE_KEY
-  );
+export default clerkMiddleware(
+  async (auth, req) => {
+    const clerkConfigured = Boolean(
+      process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY || process.env.CLERK_PUBLISHABLE_KEY
+    );
 
-  if (!clerkConfigured) {
-    return NextResponse.next();
-  }
-
-  if (isProtectedRoute(req)) {
-    const session = await auth();
-    if (!session.userId) {
-      return session.redirectToSignIn();
+    if (!clerkConfigured) {
+      return NextResponse.next();
     }
-  }
 
-  return NextResponse.next();
-});
+    if (isProtectedRoute(req)) {
+      const session = await auth();
+      if (!session.userId) {
+        return session.redirectToSignIn();
+      }
+    }
+
+    return NextResponse.next();
+  },
+  {
+    signInUrl: "/auth",
+    signUpUrl: "/auth",
+  }
+);
 
 export const config = {
   matcher: [
