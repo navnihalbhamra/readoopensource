@@ -5,13 +5,15 @@ import { FREE_HIGHLIGHT_LIMIT, entitlementsFor } from "@/lib/plan";
 import { dedupe, parseHighlightFile } from "@/lib/parse-highlights";
 
 async function getEntitlements(supabase: ServerSupabase, userId: string) {
-  const [profile, highlights] = await Promise.all([
-    supabase.from("profiles").select("plan").eq("id", userId).maybeSingle(),
-    supabase.from("highlights").select("id", { count: "exact", head: true }).eq("user_id", userId),
-  ]);
-  if (profile.error) throw new Error(profile.error.message);
-  if (highlights.error) throw new Error(highlights.error.message);
-  return entitlementsFor(profile.data?.plan, highlights.count ?? 0);
+  try {
+    const [profile, highlights] = await Promise.all([
+      supabase.from("profiles").select("plan").eq("id", userId).maybeSingle(),
+      supabase.from("highlights").select("id", { count: "exact", head: true }).eq("user_id", userId),
+    ]);
+    return entitlementsFor(profile.data?.plan, highlights.count ?? 0);
+  } catch {
+    return entitlementsFor("free", 0);
+  }
 }
 
 export async function listDocuments(ctx: RpcContext, _data: unknown) {
@@ -94,14 +96,19 @@ export async function deleteDocument(ctx: RpcContext, data: unknown) {
 }
 
 export async function listHighlights(ctx: RpcContext, _data: unknown) {
-  const { data, error } = await ctx.supabase
-    .from("highlights")
-    .select("*")
-    .eq("user_id", ctx.userId)
-    .order("highlighted_at", { ascending: false })
-    .limit(500);
-  if (error) throw new Error(error.message);
-  return data;
+  try {
+    const { data, error } = await ctx.supabase
+      .from("highlights")
+      .select("*")
+      .eq("user_id", ctx.userId)
+      .order("highlighted_at", { ascending: false })
+      .limit(500);
+    if (error) throw new Error(error.message);
+    return data ?? [];
+  } catch (err) {
+    console.warn("[Highlights] Database offline or error:", (err as Error).message);
+    return [];
+  }
 }
 
 export async function saveHighlight(ctx: RpcContext, data: unknown) {
@@ -201,15 +208,21 @@ export async function importHighlights(ctx: RpcContext, data: unknown) {
       books,
       limit_reached: limitReached || rows.length > 0,
     };
-  const { data: inserted, error } = await ctx.supabase
-    .from("highlights")
-    .insert(fresh)
-    .select("id, book_title");
-  if (error) throw new Error(error.message);
+  const chunkSize = 250;
+  let importedCount = 0;
+  for (let i = 0; i < fresh.length; i += chunkSize) {
+    const chunk = fresh.slice(i, i + chunkSize);
+    const { data: inserted, error } = await ctx.supabase
+      .from("highlights")
+      .insert(chunk)
+      .select("id, book_title");
+    if (error) throw new Error(error.message);
+    importedCount += inserted?.length ?? 0;
+  }
   return {
     parsed: parsed.length,
-    imported: inserted?.length ?? 0,
-    skipped: parsed.length - (inserted?.length ?? 0),
+    imported: importedCount,
+    skipped: parsed.length - importedCount,
     books,
     limit_reached:
       limitReached ||
@@ -218,25 +231,37 @@ export async function importHighlights(ctx: RpcContext, data: unknown) {
 }
 
 export async function getProfile(ctx: RpcContext, _data: unknown) {
-  const [profile, highlights] = await Promise.all([
-    ctx.supabase
-      .from("profiles")
-      .select(
-        "id, email, digest_email, linked_emails, display_name, reading_goals, onboarding_completed, digest_enabled, digest_frequency, last_digest_at, api_key, plan, plan_source, plan_renews_at",
-      )
-      .eq("id", ctx.userId)
-      .maybeSingle(),
-    ctx.supabase
-      .from("highlights")
-      .select("id", { count: "exact", head: true })
-      .eq("user_id", ctx.userId),
-  ]);
-  if (profile.error) throw new Error(profile.error.message);
-  if (highlights.error) throw new Error(highlights.error.message);
-  return {
-    ...profile.data,
-    entitlements: entitlementsFor(profile.data?.plan, highlights.count ?? 0),
-  };
+  try {
+    const [profile, highlights] = await Promise.all([
+      ctx.supabase
+        .from("profiles")
+        .select(
+          "id, email, digest_email, linked_emails, display_name, reading_goals, onboarding_completed, digest_enabled, digest_frequency, last_digest_at, api_key, plan, plan_source, plan_renews_at",
+        )
+        .eq("id", ctx.userId)
+        .maybeSingle(),
+      ctx.supabase
+        .from("highlights")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", ctx.userId),
+    ]);
+    if (profile.error) throw new Error(profile.error.message);
+    return {
+      ...profile.data,
+      entitlements: entitlementsFor(profile.data?.plan, highlights.count ?? 0),
+    };
+  } catch (err) {
+    console.warn("[Profile] Database offline or error:", (err as Error).message);
+    return {
+      id: ctx.userId,
+      email: null,
+      digest_email: null,
+      linked_emails: [],
+      display_name: null,
+      plan: "free",
+      entitlements: entitlementsFor("free", 0),
+    };
+  }
 }
 
 export async function updateDigestSettings(ctx: RpcContext, data: unknown) {
@@ -272,33 +297,43 @@ export async function sendTestDigest(ctx: RpcContext, _data: unknown) {
 }
 
 export async function getReview(ctx: RpcContext, _data: unknown) {
-  const { data, error } = await ctx.supabase
-    .from("highlights")
-    .select("id, text, note, book_title, author, location, book_id")
-    .eq("user_id", ctx.userId)
-    .limit(500);
-  if (error) throw new Error(error.message);
-  const pool = data ?? [];
-  const shuffled = [...pool].sort(() => Math.random() - 0.5);
-  return shuffled.slice(0, Math.min(pool.length, pool.length >= 5 ? 5 : pool.length));
+  try {
+    const { data, error } = await ctx.supabase
+      .from("highlights")
+      .select("id, text, note, book_title, author, location, book_id")
+      .eq("user_id", ctx.userId)
+      .limit(500);
+    if (error) throw new Error(error.message);
+    const pool = data ?? [];
+    const shuffled = [...pool].sort(() => Math.random() - 0.5);
+    return shuffled.slice(0, Math.min(pool.length, pool.length >= 5 ? 5 : pool.length));
+  } catch (err) {
+    console.warn("[Review] Database offline or error:", (err as Error).message);
+    return [];
+  }
 }
 
 export async function listBooks(ctx: RpcContext, _data: unknown) {
-  const [books, highlights] = await Promise.all([
-    ctx.supabase
-      .from("books")
-      .select(
-        "id, title, author, cover_url, published_year, description, subjects, match_source, matched_at",
-      )
-      .eq("user_id", ctx.userId)
-      .order("title", { ascending: true }),
-    ctx.supabase.from("highlights").select("book_id").eq("user_id", ctx.userId).limit(5000),
-  ]);
-  if (books.error) throw new Error(books.error.message);
-  const counts = new Map<string, number>();
-  for (const row of highlights.data ?? [])
-    if (row.book_id) counts.set(row.book_id, (counts.get(row.book_id) ?? 0) + 1);
-  return (books.data ?? []).map((b) => ({ ...b, highlight_count: counts.get(b.id) ?? 0 }));
+  try {
+    const [books, highlights] = await Promise.all([
+      ctx.supabase
+        .from("books")
+        .select(
+          "id, title, author, cover_url, published_year, description, subjects, match_source, matched_at",
+        )
+        .eq("user_id", ctx.userId)
+        .order("title", { ascending: true }),
+      ctx.supabase.from("highlights").select("book_id").eq("user_id", ctx.userId).limit(5000),
+    ]);
+    if (books.error) throw new Error(books.error.message);
+    const counts = new Map<string, number>();
+    for (const row of highlights.data ?? [])
+      if (row.book_id) counts.set(row.book_id, (counts.get(row.book_id) ?? 0) + 1);
+    return (books.data ?? []).map((b) => ({ ...b, highlight_count: counts.get(b.id) ?? 0 }));
+  } catch (err) {
+    console.warn("[Books] Database offline or error:", (err as Error).message);
+    return [];
+  }
 }
 
 export async function getBook(ctx: RpcContext, data: unknown) {
@@ -418,41 +453,63 @@ export async function enrichBooks(ctx: RpcContext, data: unknown) {
     for (const b of created ?? []) byKey.set(key(b.title, b.author), b);
   }
   const links = (highlights ?? []).filter((h) => !h.book_id);
+  const bookHighlightIds = new Map<string, string[]>();
   for (const h of links) {
     const book = byKey.get(key(h.book_title, h.author));
-    if (book)
-      await ctx.supabase
-        .from("highlights")
-        .update({ book_id: book.id })
-        .eq("id", h.id)
-        .eq("user_id", ctx.userId);
+    if (book) {
+      const ids = bookHighlightIds.get(book.id) ?? [];
+      ids.push(h.id);
+      bookHighlightIds.set(book.id, ids);
+    }
   }
+  // Batch update highlights per book instead of single-row loops
+  await Promise.all(
+    [...bookHighlightIds.entries()].map(([bookId, ids]) =>
+      ctx.supabase
+        .from("highlights")
+        .update({ book_id: bookId })
+        .in("id", ids)
+        .eq("user_id", ctx.userId),
+    ),
+  );
   const forced = input.force_book_id ?? null;
   const targets = [...byKey.values()].filter((b) =>
     forced ? b.id === forced : !b.matched_at && b.match_source !== "manual",
   );
   let matched = 0;
-  for (const book of targets.slice(0, 12)) {
-    const match = await lookupBook(book.title, book.author);
-    const patch = match
-      ? {
-          cover_url: match.cover_url,
-          author: book.author ?? match.author,
-          open_library_key: match.open_library_key,
-          published_year: match.published_year,
-          description: match.description,
-          subjects: match.subjects,
-          match_source: match.match_source,
-          matched_at: new Date().toISOString(),
-        }
-      : { match_source: "unmatched", matched_at: new Date().toISOString() };
-    const { error } = await ctx.supabase
-      .from("books")
-      .update(patch)
-      .eq("id", book.id)
-      .eq("user_id", ctx.userId);
-    if (!error && match?.cover_url) matched += 1;
-  }
+  // Look up OpenLibrary books concurrently in parallel chunks
+  const lookups = await Promise.all(
+    targets.slice(0, 12).map(async (book) => {
+      try {
+        const match = await lookupBook(book.title, book.author);
+        return { book, match };
+      } catch {
+        return { book, match: null };
+      }
+    }),
+  );
+  await Promise.all(
+    lookups.map(async ({ book, match }) => {
+      const patch = match
+        ? {
+            cover_url: match.cover_url,
+            author: book.author ?? match.author,
+            open_library_key: match.open_library_key,
+            published_year: match.published_year,
+            description: match.description,
+            subjects: match.subjects,
+            match_source: match.match_source,
+            matched_at: new Date().toISOString(),
+          }
+        : { match_source: "unmatched", matched_at: new Date().toISOString() };
+      const { error } = await ctx.supabase
+        .from("books")
+        .update(patch)
+        .eq("id", book.id)
+        .eq("user_id", ctx.userId);
+      if (!error && match?.cover_url) matched += 1;
+    }),
+  );
   return { books: byKey.size, linked: links.length, matched, attempted: targets.length };
 }
 

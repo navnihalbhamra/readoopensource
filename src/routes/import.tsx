@@ -9,6 +9,8 @@ import { RequireAuth } from "@/components/RequireAuth";
 import { Spinner } from "@/components/Spinner";
 import { useReaderPrefs } from "@/hooks/useReaderPrefs";
 
+import { parseHighlightFile } from "@/lib/parse-highlights";
+
 export function ImportPage() {
   const { prefs, update } = useReaderPrefs();
   const queryClient = useQueryClient();
@@ -17,14 +19,16 @@ export function ImportPage() {
   const [title, setTitle] = useState("");
   const [author, setAuthor] = useState("");
   const [text, setText] = useState("");
+  const [statusMsg, setStatusMsg] = useState<string | null>(null);
 
   const runEnrich = useServerFn("enrichBooks");
 
   const runImport = useMutation({
     mutationFn: useServerFn("importHighlights"),
     onSuccess: async (result: { parsed: number; imported: number; skipped: number }) => {
+      setStatusMsg(null);
       if (result.parsed === 0) {
-        toast.error("Nothing recognisable in that text — try one quote per paragraph.");
+        toast.error("Nothing recognisable in that text — try one quote per paragraph or upload a Readwise/Kindle CSV.");
         return;
       }
       toast.success(
@@ -35,16 +39,20 @@ export function ImportPage() {
       queryClient.invalidateQueries({ queryKey: ["highlights"] });
       queryClient.invalidateQueries({ queryKey: ["review"] });
 
-      // Automatically match the new titles to covers/authors, then refresh.
-      try {
-        const matched = await runEnrich({ data: {} });
-        if (matched.matched > 0) toast.success(`Found covers for ${matched.matched} books`);
-      } catch {
-        /* enrichment is best-effort; the Books page has a manual retry */
-      }
-      queryClient.invalidateQueries({ queryKey: ["books"] });
+      // Run book enrichment asynchronously in background without blocking import completion
+      void runEnrich({ data: {} })
+        .then((matched) => {
+          if (matched && matched.matched > 0) {
+            toast.success(`Found covers for ${matched.matched} books`);
+            queryClient.invalidateQueries({ queryKey: ["books"] });
+          }
+        })
+        .catch(() => {});
     },
-    onError: (error: Error) => toast.error(error.message),
+    onError: (error: Error) => {
+      setStatusMsg(null);
+      toast.error(error.message);
+    },
   });
 
   const addOne = useMutation({
@@ -54,12 +62,9 @@ export function ImportPage() {
       setText("");
       queryClient.invalidateQueries({ queryKey: ["highlights"] });
       queryClient.invalidateQueries({ queryKey: ["review"] });
-      try {
-        await runEnrich({ data: {} });
-      } catch {
-        /* best effort */
-      }
-      queryClient.invalidateQueries({ queryKey: ["books"] });
+      void runEnrich({ data: {} })
+        .then(() => queryClient.invalidateQueries({ queryKey: ["books"] }))
+        .catch(() => {});
     },
     onError: (error: Error) => toast.error(error.message),
   });
@@ -68,6 +73,15 @@ export function ImportPage() {
     const file = event.target.files?.[0];
     if (!file) return;
     const content = await file.text();
+    // Instant client-side parse feedback
+    try {
+      const parsedItems = parseHighlightFile(file.name, content);
+      if (parsedItems.length > 0) {
+        setStatusMsg(`Parsed ${parsedItems.length} highlights instantly. Saving to your library…`);
+      }
+    } catch {
+      // fallback
+    }
     runImport.mutate({ data: { filename: file.name, contents: content } });
   }
 
@@ -79,12 +93,18 @@ export function ImportPage() {
           Import highlights
         </h1>
         <p className="mt-2 font-body text-sm text-muted-foreground">
-          Kindle <code className="text-foreground/80">My Clippings.txt</code> and CSV exports are
-          parsed and de-duplicated automatically.
+          Kindle <code className="text-foreground/80">My Clippings.txt</code>, Readwise CSV, and Goodreads exports are
+          parsed and de-duplicated automatically at high speed.
         </p>
       </div>
 
       <section className="pb-16">
+        {statusMsg && (
+          <div className="mb-4 rounded-lg border border-accent/40 bg-accent/10 px-4 py-2.5 text-xs text-accent animate-pulse font-medium">
+            ⚡ {statusMsg}
+          </div>
+        )}
+
         <label className="group block cursor-pointer rounded-xl border border-dashed border-border bg-surface/60 p-6 text-center transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/60 hover:bg-surface">
           <input
             ref={fileRef}
@@ -94,13 +114,25 @@ export function ImportPage() {
             className="hidden"
           />
           <span className="flex items-center justify-center gap-2 font-display text-[15px] font-semibold">
-            {runImport.isPending && <Spinner label="Parsing file" />}
-            {runImport.isPending ? "Parsing…" : "Choose a clippings or CSV file"}
+            {runImport.isPending && <Spinner label="Processing highlights" />}
+            {runImport.isPending ? "Processing highlights at full speed…" : "Choose a clippings or CSV file"}
           </span>
           <span className="mt-1 block font-body text-[12px] text-muted-foreground">
-            .txt or .csv · nothing leaves your account
+            Kindle (.txt), Readwise export (.csv), Goodreads (.csv) · instant parsing
           </span>
         </label>
+
+        <div className="mt-4 rounded-xl border border-border/70 bg-surface/40 p-4">
+          <div className="flex items-center gap-2">
+            <span className="font-display text-xs font-semibold uppercase tracking-wider text-accent">
+              Switching from Readwise?
+            </span>
+          </div>
+          <p className="mt-1 font-body text-xs text-muted-foreground leading-relaxed">
+            In Readwise, go to <strong>Export &rarr; CSV</strong>. Drop the exported CSV right here.
+            All your books, quotes, notes, and dates are preserved and deduplicated automatically.
+          </p>
+        </div>
 
         <div className="mt-6">
           <p className="mb-2 text-[11px] font-medium text-muted-foreground">

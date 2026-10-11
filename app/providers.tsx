@@ -60,19 +60,10 @@ function AuthSetupNotice() {
 }
 
 export function Providers({ children }: { children: ReactNode }) {
-  if (!clerkPublishableKey) {
-    return (
-      <>
-        <AuthSetupNotice />
-        {toaster}
-      </>
-    );
-  }
-
   return (
-    <ClerkProvider publishableKey={clerkPublishableKey} appearance={clerkAppearance}>
+    <>
       <AuthProvider>{children}</AuthProvider>
       {toaster}
-    </ClerkProvider>
+    </>
   );
 }

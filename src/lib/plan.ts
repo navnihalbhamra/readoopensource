@@ -31,9 +31,9 @@ export const PRICES: PriceOption[] = [
   {
     id: "lifetime",
     name: "Lifetime",
-    price: "$49",
-    cadence: "once",
-    note: "Founding-reader price while it lasts.",
+    price: "$99",
+    cadence: "once, forever",
+    note: "Pay once. Unlimited highlights, book covers, and digests forever.",
     badge: "Founding reader",
   },
 ];

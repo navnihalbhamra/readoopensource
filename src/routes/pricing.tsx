@@ -74,32 +74,63 @@ export function Pricing() {
               ))}
             </ul>
             <div className="mt-8 grid gap-3 sm:grid-cols-3">
-              {PRICES.map((price) => (
-                <div
-                  key={price.id}
-                  className="rounded-lg border border-border bg-background/60 p-4"
-                >
-                  <div className="flex min-h-9 items-start justify-between gap-2">
-                    <p className="text-[11px] uppercase tracking-[0.12em] text-muted-foreground">
-                      {price.name.replace("Pro ", "")}
+              {PRICES.map((price) => {
+                const isLifetime = price.id === "lifetime";
+                return (
+                  <div
+                    key={price.id}
+                    className={`rounded-lg p-4 transition-all ${
+                      isLifetime
+                        ? "border-2 border-accent bg-accent/5 ring-1 ring-accent/30 shadow-lg shadow-accent/5"
+                        : "border border-border bg-background/60"
+                    }`}
+                  >
+                    <div className="flex min-h-9 items-start justify-between gap-2">
+                      <p
+                        className={`text-[11px] uppercase tracking-[0.12em] font-semibold ${
+                          isLifetime ? "text-accent" : "text-muted-foreground"
+                        }`}
+                      >
+                        {price.name.replace("Pro ", "")}
+                      </p>
+                      {price.badge && (
+                        <span
+                          className={`rounded px-1.5 py-0.5 text-right text-[10px] uppercase tracking-wider font-semibold ${
+                            isLifetime
+                              ? "bg-accent text-background font-bold"
+                              : "text-accent border border-accent/40"
+                          }`}
+                        >
+                          {price.badge}
+                        </span>
+                      )}
+                    </div>
+                    <p className="mt-4 font-display text-3xl font-semibold">{price.price}</p>
+                    <p className="mt-1 text-[11px] text-muted-foreground">{price.cadence}</p>
+                    <p className="mt-4 text-[11px] leading-relaxed text-muted-foreground">
+                      {price.note}
                     </p>
-                    {price.badge && (
-                      <span className="text-right text-[10px] text-accent">{price.badge}</span>
-                    )}
                   </div>
-                  <p className="mt-4 font-display text-3xl font-semibold">{price.price}</p>
-                  <p className="mt-1 text-[11px] text-muted-foreground">{price.cadence}</p>
-                  <p className="mt-4 text-[11px] leading-relaxed text-muted-foreground">
-                    {price.note}
-                  </p>
-                </div>
-              ))}
+                );
+              })}
             </div>
-            <Link href="/auth" className="brass-btn mt-8">
-              Join Reado
+            <div className="mt-6 rounded-lg border border-accent/30 bg-surface/80 p-4">
+              <div className="flex items-center gap-2">
+                <span className="text-accent text-xs font-semibold uppercase tracking-wider">
+                  Readwise Switcher Guarantee
+                </span>
+              </div>
+              <p className="mt-1 font-body text-xs leading-relaxed text-muted-foreground">
+                Tired of paying $96 every year for Readwise? Export your CSV or Kindle clippings and
+                bring everything over in one click. Our $99 Lifetime Pass gives you unmetered archive,
+                Kindle/CSV sync, and daily digests with zero recurring charges.
+              </p>
+            </div>
+            <Link href="/auth" className="brass-btn mt-6 w-full text-center sm:w-auto">
+              Get Lifetime Access ($99)
             </Link>
             <p className="mt-3 text-[11px] text-muted-foreground">
-              Secure checkout is being connected. Your free room is ready now.
+              Instant activation with your account.
             </p>
           </article>
         </section>

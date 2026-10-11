@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Show, SignInButton, SignUpButton, UserButton } from "@clerk/nextjs";
 import logoAsset from "@/assets/reado-lockup.png.asset.json";
 import { Reveal } from "@/components/Reveal";
 import { useAuth } from "@/hooks/useAuth";
@@ -51,28 +52,23 @@ export function Landing() {
             <span className="font-display text-lg font-semibold tracking-tight">Reado</span>
           </Link>
           <div className="flex items-center gap-2">
-            {!loading && session ? (
-              <>
-                <Link href="/pricing" className="chrome-btn">
-                  Plans
-                </Link>
-                <Link href="/review" className="brass-btn">
-                  Open Reado
-                </Link>
-              </>
-            ) : (
-              <>
-                <Link href="/pricing" className="chrome-btn">
-                  Plans
-                </Link>
-                <Link href="/auth" className="chrome-btn">
-                  Sign in
-                </Link>
-                <Link href="/auth" className="brass-btn">
-                  Start free
-                </Link>
-              </>
-            )}
+            <Link href="/pricing" className="chrome-btn">
+              Plans
+            </Link>
+            <Show when="signed-out">
+              <SignInButton mode="modal">
+                <button className="chrome-btn">Sign in</button>
+              </SignInButton>
+              <SignUpButton mode="modal">
+                <button className="brass-btn">Start free</button>
+              </SignUpButton>
+            </Show>
+            <Show when="signed-in">
+              <Link href="/review" className="brass-btn">
+                Open Reado
+              </Link>
+              <UserButton />
+            </Show>
           </div>
         </div>
       </header>
@@ -88,9 +84,16 @@ export function Landing() {
               few of them back to you each day — in a black-and-white room with nothing else in it.
             </p>
             <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-              <Link href={primaryTo} className="brass-btn px-5 py-3 text-[13px]">
-                {primaryLabel}
-              </Link>
+              <Show when="signed-out">
+                <SignUpButton mode="modal">
+                  <button className="brass-btn px-5 py-3 text-[13px]">Start free</button>
+                </SignUpButton>
+              </Show>
+              <Show when="signed-in">
+                <Link href="/review" className="brass-btn px-5 py-3 text-[13px]">
+                  Open your review
+                </Link>
+              </Show>
               <Link href="/pricing" className="chrome-btn px-5 py-3 text-[13px]">
                 View plans
               </Link>

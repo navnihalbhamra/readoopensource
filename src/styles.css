@@ -1,6 +1,7 @@
 @import url("https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..700;1,9..144,300..600&family=Newsreader:ital,opsz,wght@0,6..72,300..600;1,6..72,300..500&family=Inter:wght@400;500;600&display=swap");
 @import "tailwindcss" source(none);
 @import "tw-animate-css";
+@import "@clerk/ui/themes/shadcn.css";
 @source "..";
 
 @theme inline {
@@ -28,37 +29,61 @@
   --radius: 0.625rem;
   --background: oklch(0.145 0 0);
   --surface: oklch(0.205 0 0);
+  --card: #141416;
+  --card-foreground: oklch(0.985 0 0);
+  --popover: #141416;
+  --popover-foreground: oklch(0.985 0 0);
   --foreground: oklch(0.985 0 0);
+  --muted: oklch(0.24 0 0);
   --muted-foreground: oklch(0.7 0 0);
   --primary: oklch(0.985 0 0);
   --primary-foreground: oklch(0.145 0 0);
   --accent: oklch(0.75 0 0);
   --inkwash: oklch(0.27 0 0);
   --border: oklch(1 0 0 / 16%);
+  --input: oklch(0.25 0 0);
+  --ring: oklch(0.75 0 0);
+  --color-black: #000000;
   --destructive: oklch(0.65 0 0);
 }
 [data-theme="sepia"] {
   --background: oklch(0.24 0 0);
   --surface: oklch(0.3 0 0);
+  --card: #201d1b;
+  --card-foreground: oklch(0.96 0 0);
+  --popover: #201d1b;
+  --popover-foreground: oklch(0.96 0 0);
   --foreground: oklch(0.96 0 0);
+  --muted: oklch(0.33 0 0);
   --muted-foreground: oklch(0.74 0 0);
   --primary: oklch(0.96 0 0);
   --primary-foreground: oklch(0.24 0 0);
   --accent: oklch(0.78 0 0);
   --inkwash: oklch(0.36 0 0);
   --border: oklch(1 0 0 / 18%);
+  --input: oklch(0.33 0 0);
+  --ring: oklch(0.78 0 0);
+  --color-black: #000000;
   --destructive: oklch(0.68 0 0);
 }
 [data-theme="light"] {
   --background: oklch(1 0 0);
   --surface: oklch(0.97 0 0);
+  --card: #ffffff;
+  --card-foreground: oklch(0.13 0 0);
+  --popover: #ffffff;
+  --popover-foreground: oklch(0.13 0 0);
   --foreground: oklch(0.13 0 0);
+  --muted: oklch(0.94 0 0);
   --muted-foreground: oklch(0.45 0 0);
   --primary: oklch(0.13 0 0);
   --primary-foreground: oklch(1 0 0);
   --accent: oklch(0.35 0 0);
   --inkwash: oklch(0.9 0 0);
   --border: oklch(0 0 0 / 14%);
+  --input: oklch(0.92 0 0);
+  --ring: oklch(0.35 0 0);
+  --color-black: #000000;
   --destructive: oklch(0.35 0 0);
 }
 
@@ -314,3 +339,61 @@
     transform: none;
   }
 }
+
+/* ==========================================================================
+   Clerk Auth & Modal Overrides
+   Ensures solid, opaque cards, dark backdrop blur, and crisp contrast
+   ========================================================================== */
+.cl-modalBackdrop {
+  background-color: rgba(0, 0, 0, 0.78) !important;
+  backdrop-filter: blur(10px) !important;
+  -webkit-backdrop-filter: blur(10px) !important;
+}
+
+.cl-card,
+.cl-cardBox,
+.cl-modalContent,
+.cl-userProfile-root,
+.cl-userButton-popoverCard {
+  background-color: var(--card, #141416) !important;
+  color: var(--card-foreground, #f5f5f5) !important;
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.15)) !important;
+  border-radius: var(--radius, 0.75rem) !important;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.85), 0 0 0 1px rgba(255, 255, 255, 0.08) !important;
+  opacity: 1 !important;
+}
+
+.cl-userProfile-root .cl-pageScrollBox,
+.cl-userProfile-root .cl-navbar {
+  background-color: var(--card, #141416) !important;
+}
+
+.cl-formFieldInput,
+.cl-input {
+  background-color: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.15)) !important;
+  color: #f5f5f5 !important;
+}
+
+.cl-formFieldInput:focus,
+.cl-input:focus {
+  border-color: rgba(255, 255, 255, 0.45) !important;
+  background-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+.cl-formButtonPrimary {
+  background-color: #f5f5f5 !important;
+  color: #111111 !important;
+  font-weight: 600 !important;
+}
+
+.cl-socialButtonsBlockButton {
+  background-color: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.15)) !important;
+  color: #f5f5f5 !important;
+}
+
+.cl-socialButtonsBlockButton:hover {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+}
+

@@ -28,7 +28,14 @@ function createSupabaseFetch(supabaseKey: string): typeof fetch {
     }
 
     headers.set("apikey", supabaseKey);
-    return fetch(input, { ...init, headers });
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 4000);
+    if (init?.signal) {
+      init.signal.addEventListener("abort", () => controller.abort());
+    }
+    return fetch(input, { ...init, headers, signal: controller.signal }).finally(() => {
+      clearTimeout(timer);
+    });
   };
 }
 

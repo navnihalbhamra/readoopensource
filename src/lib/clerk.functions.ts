@@ -25,25 +25,32 @@ async function getVerifiedEmails(userId: string) {
 }
 
 export async function syncClerkProfile(ctx: RpcContext, _data: unknown) {
-  const { emails, primary } = await getVerifiedEmails(ctx.userId);
-  const { data: existing, error: readError } = await ctx.supabase
-    .from("profiles")
-    .select("display_name, digest_frequency, reading_goals, onboarding_completed, digest_email")
-    .eq("id", ctx.userId)
-    .maybeSingle();
-  if (readError) throw new Error(readError.message);
-  const selectedEmail =
-    existing?.digest_email && emails.includes(existing.digest_email)
-      ? existing.digest_email
-      : primary;
-  const { error } = await ctx.supabase
-    .from("profiles")
-    .upsert(
-      { id: ctx.userId, email: primary, linked_emails: emails, digest_email: selectedEmail },
-      { onConflict: "id" },
-    );
-  if (error) throw new Error(error.message);
-  return { email: primary, linked_emails: emails, digest_email: selectedEmail };
+  try {
+    const { emails, primary } = await getVerifiedEmails(ctx.userId);
+    try {
+      const { data: existing } = await ctx.supabase
+        .from("profiles")
+        .select("display_name, digest_frequency, reading_goals, onboarding_completed, digest_email")
+        .eq("id", ctx.userId)
+        .maybeSingle();
+      const selectedEmail =
+        existing?.digest_email && emails.includes(existing.digest_email)
+          ? existing.digest_email
+          : primary;
+      await ctx.supabase
+        .from("profiles")
+        .upsert(
+          { id: ctx.userId, email: primary, linked_emails: emails, digest_email: selectedEmail },
+          { onConflict: "id" },
+        );
+      return { email: primary, linked_emails: emails, digest_email: selectedEmail };
+    } catch {
+      return { email: primary, linked_emails: emails, digest_email: primary };
+    }
+  } catch (err) {
+    console.warn("[Clerk Sync] Error:", (err as Error).message);
+    return { email: null, linked_emails: [], digest_email: null };
+  }
 }
 
 export async function updateDigestEmail(ctx: RpcContext, data: unknown) {

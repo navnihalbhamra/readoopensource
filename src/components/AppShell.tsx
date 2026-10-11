@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState, type ReactNode } from "react";
+import { UserButton } from "@clerk/nextjs";
 
 import logoAsset from "@/assets/reado-mark.png.asset.json";
 import { Spinner } from "@/components/Spinner";
@@ -68,15 +69,7 @@ export function AppShell({ prefs, update, children, focus = false }: Props) {
               >
                 Aa
               </button>
-              <button
-                className="chrome-btn"
-                onClick={async () => {
-                  await signOut();
-                  router.replace("/auth");
-                }}
-              >
-                Sign out
-              </button>
+              <UserButton />
               {typeOpen && (
                 <div className="pop-in absolute right-0 top-11 z-30">
                   <TypeControls prefs={prefs} update={update} />
