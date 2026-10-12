@@ -41,6 +41,10 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
               userButtonPopoverCard: "bg-[#141416] border border-white/10 shadow-2xl rounded-xl",
             },
           }}
+          signInUrl={process.env.NEXT_PUBLIC_CLERK_SIGN_IN_URL || "/sign-in"}
+          signUpUrl={process.env.NEXT_PUBLIC_CLERK_SIGN_UP_URL || "/sign-up"}
+          signInFallbackRedirectUrl={process.env.NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL || "/review"}
+          signUpFallbackRedirectUrl={process.env.NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL || "/onboarding"}
         >
           <Providers>{children}</Providers>
           <Analytics />

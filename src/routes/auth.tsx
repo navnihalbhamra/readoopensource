@@ -8,10 +8,20 @@ import logoAsset from "@/assets/reado-lockup.png.asset.json";
 import { Reveal } from "@/components/Reveal";
 import { clerkAppearance } from "@/lib/clerk-config";
 
-export function AuthPage() {
+export function AuthPage({
+  defaultMode = "signin",
+  routing = "path",
+}: {
+  defaultMode?: "signin" | "signup";
+  routing?: "path" | "hash";
+} = {}) {
   const { isLoaded, isSignedIn } = useClerkAuth();
   const router = useRouter();
-  const [mode, setMode] = useState<"signin" | "signup">("signin");
+  const [mode, setMode] = useState<"signin" | "signup">(defaultMode);
+
+  useEffect(() => {
+    setMode(defaultMode);
+  }, [defaultMode]);
 
   useEffect(() => {
     if (isLoaded && isSignedIn) router.replace("/review");
@@ -47,11 +57,29 @@ export function AuthPage() {
 
         <Reveal className="mx-auto w-full max-w-md rounded-xl border border-border bg-surface/50 p-5 shadow-2xl shadow-background/40 sm:p-8">
           {mode === "signin" ? (
-            <SignIn
+            routing === "path" ? (
+              <SignIn
+                appearance={clerkAppearance}
+                routing="path"
+                path="/sign-in"
+                fallbackRedirectUrl="/review"
+                signUpUrl="/sign-up"
+              />
+            ) : (
+              <SignIn
+                appearance={clerkAppearance}
+                routing="hash"
+                fallbackRedirectUrl="/review"
+                signUpUrl="/auth#sign-up"
+              />
+            )
+          ) : routing === "path" ? (
+            <SignUp
               appearance={clerkAppearance}
-              routing="hash"
-              fallbackRedirectUrl="/review"
-              signUpUrl="/auth#sign-up"
+              routing="path"
+              path="/sign-up"
+              fallbackRedirectUrl="/onboarding"
+              signInUrl="/sign-in"
             />
           ) : (
             <SignUp
@@ -63,7 +91,14 @@ export function AuthPage() {
           )}
           <button
             type="button"
-            onClick={() => setMode(mode === "signin" ? "signup" : "signin")}
+            onClick={() => {
+              const nextMode = mode === "signin" ? "signup" : "signin";
+              if (routing === "path") {
+                router.push(nextMode === "signin" ? "/sign-in" : "/sign-up");
+              } else {
+                setMode(nextMode);
+              }
+            }}
             className="mt-6 w-full text-center text-[12px] text-muted-foreground transition-colors hover:text-foreground"
           >
             {mode === "signin" ? "No account yet? Create one" : "Already have an account? Sign in"}

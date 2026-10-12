@@ -12,7 +12,9 @@ export function RequireAuth({ children }: { children: ReactNode }) {
   const router = useRouter();
 
   useEffect(() => {
-    if (!loading && !session) router.replace("/auth");
+    if (!loading && !session) {
+      router.replace(process.env.NEXT_PUBLIC_CLERK_SIGN_IN_URL || "/sign-in");
+    }
   }, [loading, session, router]);
 
   if (loading || !session) {

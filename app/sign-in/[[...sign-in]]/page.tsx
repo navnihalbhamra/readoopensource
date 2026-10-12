@@ -1,9 +1,8 @@
-import { SignIn } from "@clerk/nextjs";
+"use client";
+
+import { AuthPage } from "@/routes/auth";
 
 export default function SignInPage() {
-  return (
-    <div className="flex min-h-screen items-center justify-center">
-      <SignIn />
-    </div>
-  );
+  return <AuthPage defaultMode="signin" routing="path" />;
 }
+
