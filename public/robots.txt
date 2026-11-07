@@ -1,14 +1,47 @@
+# Robots.txt for Reado (https://reado.lol)
+User-agent: *
+Allow: /
+Allow: /pricing
+Allow: /sign-in
+Allow: /sign-up
+
+# Disallow private user workspace & authenticated routes
+Disallow: /review
+Disallow: /books
+Disallow: /book/
+Disallow: /highlights
+Disallow: /import
+Disallow: /read/
+Disallow: /settings
+Disallow: /onboarding
+Disallow: /api/
+
+# Explicit search engine bot configurations
 User-agent: Googlebot
 Allow: /
+Allow: /pricing
+Disallow: /review
+Disallow: /books
+Disallow: /book/
+Disallow: /highlights
+Disallow: /import
+Disallow: /read/
+Disallow: /settings
+Disallow: /onboarding
+Disallow: /api/
 
 User-agent: Bingbot
 Allow: /
+Allow: /pricing
+Disallow: /review
+Disallow: /books
+Disallow: /book/
+Disallow: /highlights
+Disallow: /import
+Disallow: /read/
+Disallow: /settings
+Disallow: /onboarding
+Disallow: /api/
 
-User-agent: Twitterbot
-Allow: /
-
-User-agent: facebookexternalhit
-Allow: /
-
-User-agent: *
-Allow: /
+# XML Sitemap for Google Search Console
+Sitemap: https://reado.lol/sitemap.xml

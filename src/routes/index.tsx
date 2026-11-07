@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import { Show, SignInButton, SignUpButton, UserButton } from "@clerk/nextjs";
 import logoAsset from "@/assets/reado-lockup.png.asset.json";
