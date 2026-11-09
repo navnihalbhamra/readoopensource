@@ -32,13 +32,18 @@ export function Pricing() {
       </header>
       <main className="mx-auto max-w-5xl px-5 pb-20 pt-16">
         <section className="max-w-2xl">
+          <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-3.5 py-1 text-xs font-semibold text-primary">
+            <span>⚡ The Readwise Alternative With No Subscriptions</span>
+            <span>·</span>
+            <span>$49 Lifetime Access</span>
+          </div>
           <p className="eyebrow">A calm reading room forever</p>
-          <h1 className="mt-4 font-display text-4xl font-semibold leading-tight tracking-tight sm:text-6xl">
+          <h1 className="mt-2 font-display text-4xl font-semibold leading-tight tracking-tight sm:text-6xl">
             One simple pass. No recurring subscriptions.
           </h1>
           <p className="mt-5 max-w-xl font-body text-lg leading-relaxed text-muted-foreground">
-            Test Reado with up to 5 highlights and live email digests for free. When you're ready,
-            unlock unlimited highlights and your full reading archive with the Founder Pass.
+            Why pay $100+ every year for Readwise? Test Reado with up to 5 highlights and live email digests for free. When you're ready,
+            unlock unlimited highlights and your full reading archive with the one-time $49 Founder Pass.
           </p>
         </section>
         <section className="mt-12 grid gap-6 lg:grid-cols-2">
@@ -132,6 +137,70 @@ export function Pricing() {
               </p>
             </div>
           </article>
+        </section>
+
+        {/* Readwise vs Reado Comparison Table */}
+        <section className="mt-16 rounded-2xl border border-border bg-surface/50 p-6 sm:p-8 shadow-xl">
+          <div className="text-center">
+            <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-3 py-1 text-xs font-semibold text-primary">
+              <span>Readwise Alternative</span>
+            </div>
+            <h3 className="mt-3 font-display text-2xl font-bold text-foreground sm:text-3xl">
+              How Reado Compares to Readwise
+            </h3>
+            <p className="mx-auto mt-2 max-w-xl text-sm text-muted-foreground">
+              Everything you need to remember what you read, without the subscription fatigue.
+            </p>
+          </div>
+
+          <div className="mt-8 overflow-x-auto">
+            <table className="w-full text-left text-sm">
+              <thead>
+                <tr className="border-b border-border/80 text-xs uppercase tracking-wider text-muted-foreground">
+                  <th className="pb-3 font-semibold">Feature</th>
+                  <th className="pb-3 font-semibold text-foreground">Reado (Founder Pass)</th>
+                  <th className="pb-3 font-semibold text-muted-foreground">Readwise</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border/60">
+                <tr>
+                  <td className="py-3.5 font-medium">Pricing Model</td>
+                  <td className="py-3.5 font-semibold text-emerald-400">One-time $49 (Lifetime)</td>
+                  <td className="py-3.5 text-muted-foreground">$96 – $120+ / year (Recurring)</td>
+                </tr>
+                <tr>
+                  <td className="py-3.5 font-medium">Kindle "My Clippings.txt" Import</td>
+                  <td className="py-3.5 font-semibold text-emerald-400">✓ Instant 1-Click</td>
+                  <td className="py-3.5 text-muted-foreground">✓ Included</td>
+                </tr>
+                <tr>
+                  <td className="py-3.5 font-medium">Daily Email Review Digest</td>
+                  <td className="py-3.5 font-semibold text-emerald-400">✓ Custom Time & Frequency</td>
+                  <td className="py-3.5 text-muted-foreground">✓ Included</td>
+                </tr>
+                <tr>
+                  <td className="py-3.5 font-medium">Automatic Book Cover Matching</td>
+                  <td className="py-3.5 font-semibold text-emerald-400">✓ Open Library & Google Books</td>
+                  <td className="py-3.5 text-muted-foreground">✓ Included</td>
+                </tr>
+                <tr>
+                  <td className="py-3.5 font-medium">Spaced-Repetition Daily Review Room</td>
+                  <td className="py-3.5 font-semibold text-emerald-400">✓ Quiet & Distraction-Free</td>
+                  <td className="py-3.5 text-muted-foreground">✓ Included</td>
+                </tr>
+                <tr>
+                  <td className="py-3.5 font-medium">Free Kindle Clippings Cleaner</td>
+                  <td className="py-3.5 font-semibold text-emerald-400">✓ Free Standalone Tool</td>
+                  <td className="py-3.5 text-muted-foreground">Requires Paid Account</td>
+                </tr>
+                <tr>
+                  <td className="py-3.5 font-medium">5-Year Total Cost</td>
+                  <td className="py-3.5 font-bold text-emerald-400">$49 total</td>
+                  <td className="py-3.5 text-destructive font-semibold">$480 – $600+</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </section>
       </main>
     </div>

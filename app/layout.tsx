@@ -10,11 +10,11 @@ const siteUrl = process.env.NEXT_PUBLIC_APP_URL || "https://reado.lol";
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "Reado — The Reading Memory Engine | Remember What You Read",
+    default: "Reado — The Readwise Alternative with No Subscriptions | Remember What You Read",
     template: "%s | Reado",
   },
   description:
-    "You spend hours reading books — only to forget almost all of it weeks later. Reado resurfaces your best highlights directly to your inbox and daily review room on your schedule. Kindle clippings & CSV import.",
+    "The #1 Readwise alternative with no recurring monthly subscriptions. Reado resurfaces your Kindle book highlights directly to your inbox and daily review room on your schedule. One-time $49 lifetime pass.",
   applicationName: "Reado",
   authors: [{ name: "Reado Team", url: siteUrl }],
   creator: "Reado",
@@ -22,15 +22,20 @@ export const metadata: Metadata = {
   category: "Productivity & Education",
   keywords: [
     "readwise alternative",
-    "kindle highlights",
-    "my clippings parser",
-    "reading memory",
+    "readwise alternative lifetime",
+    "readwise alternative no subscription",
+    "readwise one time payment",
+    "readwise lifetime deal",
+    "readwise pricing alternative",
+    "readwise vs reado",
+    "kindle highlights without subscription",
+    "kindle my clippings parser",
+    "kindle clippings cleaner",
+    "reading memory engine",
     "spaced repetition books",
     "book highlight digest",
     "remember what you read",
     "kindle email digest",
-    "highlight reader",
-    "book quotes reminder",
     "founder reading archive",
   ],
   alternates: {
@@ -124,18 +129,26 @@ const jsonLd = {
       mainEntity: [
         {
           "@type": "Question",
-          name: "What is Reado?",
+          name: "What is Reado and how is it a Readwise alternative?",
           acceptedAnswer: {
             "@type": "Answer",
-            text: "Reado is a reading memory engine (similar to Readwise) that helps you remember what you read by importing book highlights from Kindle or CSV and resurfacing them in a daily review room and scheduled email digests.",
+            text: "Reado is the premier Readwise alternative designed for readers who want to remember what they read without paying recurring monthly or annual subscriptions. Reado imports your Kindle My Clippings and book notes, automatically matches book covers, and resurfaces quiet quotes in a daily review room and scheduled morning email digests for a one-time $49 lifetime pass.",
           },
         },
         {
           "@type": "Question",
-          name: "How does Reado's pricing work?",
+          name: "Does Reado have a monthly subscription like Readwise?",
           acceptedAnswer: {
             "@type": "Answer",
-            text: "Reado offers a free preview for up to 5 highlights. To unlock unlimited highlights and lifetime reading memory, you can purchase the one-time $49 Founder Pass. There are no recurring monthly subscriptions.",
+            text: "No! Unlike Readwise's recurring $100+ per year subscription model, Reado offers a free 5-quote test plan followed by a single $49 one-time payment for the Founder Pass, giving you unlimited lifetime access forever with no recurring bills.",
+          },
+        },
+        {
+          "@type": "Question",
+          name: "How does Reado's pricing compare to Readwise?",
+          acceptedAnswer: {
+            "@type": "Answer",
+            text: "Readwise costs $96 to $120+ every year. Reado costs a one-time $49 fee for lifetime access. You pay once and keep your reading memory engine forever.",
           },
         },
         {

@@ -2,6 +2,7 @@
 User-agent: *
 Allow: /
 Allow: /pricing
+Allow: /kindle-clippings-cleaner
 Allow: /sign-in
 Allow: /sign-up
 
@@ -20,6 +21,7 @@ Disallow: /api/
 User-agent: Googlebot
 Allow: /
 Allow: /pricing
+Allow: /kindle-clippings-cleaner
 Disallow: /review
 Disallow: /books
 Disallow: /book/
@@ -33,6 +35,7 @@ Disallow: /api/
 User-agent: Bingbot
 Allow: /
 Allow: /pricing
+Allow: /kindle-clippings-cleaner
 Disallow: /review
 Disallow: /books
 Disallow: /book/

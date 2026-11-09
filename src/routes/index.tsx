@@ -26,12 +26,12 @@ const HOW_IT_WORKS = [
 
 const VALUES = [
   {
-    title: "Custom delivery time & frequency",
-    desc: "Receive your review emails when your mind is receptive — morning coffee at 8:00 AM, midday quiet break, or custom days of the week.",
+    title: "No recurring subscriptions (Readwise Alternative)",
+    desc: "Why pay $100+ every year for reading apps? Test 5 quotes for free, then unlock unlimited reading memory forever with our one-time $49 Founder Pass. No monthly bills.",
   },
   {
-    title: "One-time $49 lifetime pass",
-    desc: "No monthly subscriptions or recurring bills. Test 5 quotes for free, then unlock unlimited reading memory forever with the Founder Pass.",
+    title: "Custom delivery time & frequency",
+    desc: "Receive your review emails when your mind is receptive — morning coffee at 8:00 AM, midday quiet break, or custom days of the week.",
   },
   {
     title: "Zero distractions",
@@ -55,7 +55,10 @@ export function Landing() {
             <img src={logoAsset.url} alt="Reado" className="h-6 w-auto object-contain" />
             <span className="font-display text-lg font-semibold tracking-tight">Reado</span>
           </Link>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
+            <Link href="/kindle-clippings-cleaner" className="hidden sm:inline-flex text-xs text-muted-foreground hover:text-foreground">
+              Free Kindle Cleaner
+            </Link>
             <Link href="/pricing" className="chrome-btn text-xs">
               Founder Pass
             </Link>
@@ -81,6 +84,11 @@ export function Landing() {
         {/* Hero Section */}
         <Reveal>
           <section className="mx-auto max-w-3xl px-5 pb-16 pt-20 text-center">
+            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-3.5 py-1 text-xs font-semibold text-primary">
+              <span>⚡ The Readwise Alternative With No Subscriptions</span>
+              <span>·</span>
+              <span>$49 Lifetime Pass</span>
+            </div>
             <p className="eyebrow">The reading memory engine</p>
             <h1 className="mx-auto mt-4 max-w-2xl font-display text-4xl font-semibold leading-[1.08] tracking-tight text-balance sm:text-6xl">
               Remember what you read.
@@ -110,7 +118,7 @@ export function Landing() {
             </div>
 
             <p className="mt-4 text-[11px] uppercase tracking-[0.16em] text-muted-foreground/80">
-              5 free quotes to test · No recurring subscription · Kindle & CSV import
+              No subscriptions like Readwise · 5 free quotes to test · $49 lifetime · Kindle & CSV import
             </p>
 
             {/* Visual Routine Showcase */}
@@ -239,6 +247,9 @@ export function Landing() {
         <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3 px-5 py-8 text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
           <span>Reado · Remember what you read</span>
           <div className="flex gap-4">
+            <Link href="/kindle-clippings-cleaner" className="hover:text-foreground">
+              Kindle Cleaner
+            </Link>
             <Link href="/pricing" className="hover:text-foreground">
               Founder Pass
             </Link>

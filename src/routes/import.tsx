@@ -28,6 +28,19 @@ export function ImportPage() {
   const [text, setText] = useState("");
   const [statusMsg, setStatusMsg] = useState<string | null>(null);
 
+  React.useEffect(() => {
+    try {
+      const pending = localStorage.getItem("reado_pending_clippings");
+      if (pending && !pasted) {
+        setPasted(pending);
+        localStorage.removeItem("reado_pending_clippings");
+        toast.info("Pre-filled your clippings from the Kindle Cleaner tool!");
+      }
+    } catch {
+      // ignore
+    }
+  }, []);
+
   const runEnrich = useServerFn("enrichBooks");
 
   const runImport = useMutation({

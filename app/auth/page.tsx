@@ -1,3 +1,8 @@
 "use client";
+
 import { AuthPage } from "@/routes/auth";
-export default AuthPage;
+
+export default function Page() {
+  return <AuthPage />;
+}
+
