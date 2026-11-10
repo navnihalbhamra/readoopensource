@@ -5,6 +5,7 @@ const isProtectedRoute = createRouteMatcher([
   "/review(.*)",
   "/books(.*)",
   "/book(.*)",
+  "/articles(.*)",
   "/highlights(.*)",
   "/import(.*)",
   "/settings(.*)",

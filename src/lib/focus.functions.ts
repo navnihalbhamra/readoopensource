@@ -18,13 +18,130 @@ async function getEntitlements(supabase: ServerSupabase, userId: string) {
 }
 
 export async function listDocuments(ctx: RpcContext, _data: unknown) {
-  const { data, error } = await ctx.supabase
+  const [docsResult, highlightsResult] = await Promise.all([
+    ctx.supabase
+      .from("documents")
+      .select("id, title, author, source, progress, content, created_at")
+      .eq("user_id", ctx.userId)
+      .order("created_at", { ascending: false }),
+    ctx.supabase
+      .from("highlights")
+      .select("id, document_id")
+      .eq("user_id", ctx.userId)
+      .not("document_id", "is", null),
+  ]);
+
+  if (docsResult.error) throw new Error(docsResult.error.message);
+  const docs = docsResult.data ?? [];
+  const highlightCounts = new Map<string, number>();
+  for (const h of highlightsResult.data ?? []) {
+    if (h.document_id) {
+      highlightCounts.set(h.document_id, (highlightCounts.get(h.document_id) ?? 0) + 1);
+    }
+  }
+
+  return docs.map((doc) => {
+    const words = doc.content ? doc.content.trim().split(/\s+/).filter(Boolean).length : 0;
+    const readingTimeMinutes = Math.max(1, Math.round(words / 220));
+    return {
+      id: doc.id,
+      title: doc.title,
+      author: doc.author,
+      source: doc.source,
+      progress: doc.progress ?? 0,
+      created_at: doc.created_at,
+      word_count: words,
+      reading_time_minutes: readingTimeMinutes,
+      highlight_count: highlightCounts.get(doc.id) ?? 0,
+    };
+  });
+}
+
+export async function saveArticleUrl(ctx: RpcContext, data: unknown) {
+  const input = z.object({ url: z.string().url() }).parse(data);
+  const { extractArticleFromUrl } = await import("@/lib/article-scraper.server");
+  const scraped = await extractArticleFromUrl(input.url);
+
+  const { data: row, error } = await ctx.supabase
     .from("documents")
-    .select("id, title, author, source, progress, created_at")
-    .eq("user_id", ctx.userId)
-    .order("created_at", { ascending: false });
+    .insert({
+      user_id: ctx.userId,
+      title: scraped.title,
+      author: scraped.author || null,
+      content: scraped.content,
+      source: scraped.source,
+      progress: 0,
+    })
+    .select("id, title, author, source, created_at")
+    .single();
+
   if (error) throw new Error(error.message);
-  return data;
+
+  return {
+    ...row,
+    word_count: scraped.wordCount,
+    reading_time_minutes: scraped.readingTimeMinutes,
+  };
+}
+
+export async function importOmnivore(ctx: RpcContext, data: unknown) {
+  const input = z
+    .object({
+      contents: z.string().min(1),
+      filename: z.string().optional(),
+    })
+    .parse(data);
+
+  const { parseOmnivoreExport } = await import("@/lib/omnivore-importer");
+  const parsed = parseOmnivoreExport(input.contents, input.filename);
+
+  if (parsed.articles.length === 0 && parsed.totalHighlights === 0) {
+    return { articles: 0, highlights: 0 };
+  }
+
+  let importedArticles = 0;
+  let importedHighlights = 0;
+
+  for (const art of parsed.articles) {
+    const { data: docRow } = await ctx.supabase
+      .from("documents")
+      .insert({
+        user_id: ctx.userId,
+        title: art.title,
+        author: art.author || null,
+        content: art.content || "Imported from Omnivore",
+        source: art.url || "omnivore",
+        progress: 0,
+      })
+      .select("id")
+      .single();
+
+    if (docRow?.id) {
+      importedArticles++;
+      if (art.highlights.length > 0) {
+        const highlightRows = art.highlights.map((h) => ({
+          user_id: ctx.userId,
+          document_id: docRow.id,
+          book_title: art.title,
+          author: art.author || null,
+          text: h.text,
+          note: h.note || null,
+          source: "omnivore",
+          highlighted_at: h.createdAt || new Date().toISOString(),
+        }));
+
+        const { error } = await ctx.supabase.from("highlights").insert(highlightRows);
+        if (!error) {
+          importedHighlights += art.highlights.length;
+        }
+      }
+    }
+  }
+
+  return {
+    articles: importedArticles,
+    highlights: importedHighlights,
+  };
 }
 
 export async function getDocument(ctx: RpcContext, data: unknown) {
@@ -604,6 +721,8 @@ export const serverFunctions = {
   listDocuments: { method: "GET", handler: listDocuments },
   getDocument: { method: "GET", handler: getDocument },
   createDocument: { method: "POST", handler: createDocument },
+  saveArticleUrl: { method: "POST", handler: saveArticleUrl },
+  importOmnivore: { method: "POST", handler: importOmnivore },
   saveProgress: { method: "POST", handler: saveProgress },
   deleteDocument: { method: "POST", handler: deleteDocument },
   listHighlights: { method: "GET", handler: listHighlights },

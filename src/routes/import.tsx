@@ -22,11 +22,41 @@ export function ImportPage() {
   const isAtLimit = isFree && (entitlements?.remaining ?? 0) <= 0;
 
   const fileRef = useRef<HTMLInputElement>(null);
+  const omnivoreFileRef = useRef<HTMLInputElement>(null);
   const [pasted, setPasted] = useState("");
   const [title, setTitle] = useState("");
   const [author, setAuthor] = useState("");
   const [text, setText] = useState("");
   const [statusMsg, setStatusMsg] = useState<string | null>(null);
+
+  const runOmnivoreImport = useMutation({
+    mutationFn: useServerFn("importOmnivore"),
+    onSuccess: (result: { articles: number; highlights: number }) => {
+      toast.success(
+        `Imported ${result.articles} articles and ${result.highlights} highlights from Omnivore!`,
+        {
+          action: {
+            label: "Open Articles →",
+            onClick: () => {
+              window.location.href = "/articles";
+            },
+          },
+        }
+      );
+      queryClient.invalidateQueries({ queryKey: ["documents"] });
+      queryClient.invalidateQueries({ queryKey: ["highlights"] });
+      queryClient.invalidateQueries({ queryKey: ["review"] });
+      if (omnivoreFileRef.current) omnivoreFileRef.current.value = "";
+    },
+    onError: (err: Error) => toast.error(err.message),
+  });
+
+  const onOmnivoreFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const contents = await file.text();
+    runOmnivoreImport.mutate({ data: { filename: file.name, contents } });
+  };
 
   React.useEffect(() => {
     try {
@@ -224,6 +254,51 @@ export function ImportPage() {
             {runImport.isPending && <Spinner label="Importing highlights" />}
             {runImport.isPending ? "Importing…" : "Import pasted text"}
           </button>
+        </div>
+
+        {/* Omnivore Migration Card */}
+        <div className="mt-8 rounded-2xl border-2 border-primary/30 bg-primary/5 p-6 shadow-sm">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/20 px-3 py-0.5 text-xs font-semibold text-primary">
+                <span>Migrating from Omnivore</span>
+              </div>
+              <h3 className="mt-2 font-display text-lg font-semibold text-foreground">
+                Import Omnivore Articles, Highlights & Notes
+              </h3>
+              <p className="mt-1 max-w-xl font-body text-xs text-muted-foreground leading-relaxed">
+                Upload your Omnivore JSON, CSV, or Markdown export file.
+                Reado imports your saved articles into your Reading Queue and adds all highlights & personal notes to your daily review room and email routine.
+              </p>
+            </div>
+
+            <label className="brass-btn shrink-0 cursor-pointer text-xs font-semibold px-4 py-2.5">
+              <input
+                ref={omnivoreFileRef}
+                type="file"
+                accept=".json,.csv,.md,.txt,application/json"
+                onChange={onOmnivoreFile}
+                className="hidden"
+              />
+              {runOmnivoreImport.isPending && <Spinner label="Importing Omnivore data" />}
+              {runOmnivoreImport.isPending ? "Importing from Omnivore…" : "Upload Omnivore Export"}
+            </label>
+          </div>
+        </div>
+
+        {/* Web Article Quick Link */}
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border bg-surface/50 p-4">
+          <div>
+            <h4 className="font-display text-sm font-semibold text-foreground">
+              Want to save an online article to read later?
+            </h4>
+            <p className="text-xs text-muted-foreground">
+              Paste any URL to extract the clean article and read in our typography reader.
+            </p>
+          </div>
+          <Link href="/articles" className="chrome-btn text-xs">
+            Open Articles & Save Link →
+          </Link>
         </div>
 
         <div className="mt-10 border-t border-border pt-7">

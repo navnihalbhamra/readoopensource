@@ -20,6 +20,7 @@ interface Props {
 const NAV = [
   { to: "/review", label: "Review" },
   { to: "/books", label: "Books" },
+  { to: "/articles", label: "Articles" },
   { to: "/import", label: "Import" },
   { to: "/settings", label: "Settings" },
 ] as const;

@@ -2,25 +2,28 @@ import type { Metadata } from "next";
 import { Pricing } from "@/routes/pricing";
 
 export const metadata: Metadata = {
-  title: "Pricing & Founder Pass — Readwise Alternative with $49 Lifetime Access",
+  title: "Pricing & Founder Pass — Open-Source Readwise Alternative | Self-Host or Cloud",
   description:
-    "Why pay $100+ every year for Readwise? Reado is the one-time $49 lifetime pass to remember what you read. Kindle & CSV import, daily spaced-repetition review room, and morning email digests. No monthly subscriptions.",
+    "Why pay $100+ every year for Readwise? Self-host Reado for free on GitHub or get the $49 lifetime Founder Pass for managed cloud. Open source, Kindle & CSV import, web articles, and morning email digests. No monthly subscriptions.",
   alternates: {
     canonical: "/pricing",
   },
   keywords: [
     "readwise alternative",
+    "open source readwise alternative",
+    "self host readwise alternative",
     "readwise pricing",
     "readwise lifetime deal",
     "readwise alternative no subscription",
+    "self hosted highlight digest",
     "readwise one time payment",
     "readwise vs reado pricing",
     "lifetime reading memory pass",
   ],
   openGraph: {
-    title: "Reado Pricing — The $49 Lifetime Readwise Alternative",
+    title: "Reado Pricing — Open-Source Readwise Alternative with No Subscriptions",
     description:
-      "A calm reading room forever with no recurring subscriptions. Test 5 quotes for free, or unlock unlimited reading memory for life for $49.",
+      "A calm reading sanctuary forever. Self-host for free on GitHub, or get the $49 lifetime Founder Pass for automated morning emails and cloud sync.",
     url: "https://reado.lol/pricing",
   },
 };

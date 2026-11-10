@@ -4,6 +4,8 @@ export type Plan = "free" | "founder" | "lifetime" | "pro";
 export const FREE_HIGHLIGHT_LIMIT = 5;
 export const MAX_WORDS_PER_HIGHLIGHT = 50;
 export const POLAR_FOUNDER_PRODUCT_ID = "94af6917-db05-46d6-b84a-c6c6e8744ea6";
+export const GITHUB_REPO_URL =
+  process.env.NEXT_PUBLIC_GITHUB_REPO_URL || "https://github.com/navnihalbhamra/readoopensource";
 
 export interface PriceOption {
   id: "lifetime";
@@ -37,11 +39,22 @@ export const PRO_FEATURES = [
   "Daily email digest, on your schedule",
   "Automatic covers, authors and book pages",
   "Kindle My Clippings & CSV archive imports",
+  "Read-it-later web article saver & audio TTS",
+  "Omnivore JSON, Markdown & CSV migration",
   "Choose which inbox your digest lands in",
   "Zero recurring subscriptions forever",
 ];
 
 export const FOUNDER_FEATURES = PRO_FEATURES;
+
+export const SELF_HOST_FEATURES = [
+  "100% Free & Open-Source (GitHub repository)",
+  "Deploy on your own VPS, Docker, or homelab",
+  "Full control over your database & data storage",
+  "Kindle clippings, CSV & Omnivore imports",
+  "Distraction-free typography reader & web scraper",
+  "You configure your own SMTP email relay & server crons",
+];
 
 export interface Entitlements {
   plan: Plan;

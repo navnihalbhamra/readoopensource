@@ -10,6 +10,7 @@ Allow: /sign-up
 Disallow: /review
 Disallow: /books
 Disallow: /book/
+Disallow: /articles
 Disallow: /highlights
 Disallow: /import
 Disallow: /read/
@@ -25,6 +26,7 @@ Allow: /kindle-clippings-cleaner
 Disallow: /review
 Disallow: /books
 Disallow: /book/
+Disallow: /articles
 Disallow: /highlights
 Disallow: /import
 Disallow: /read/
@@ -39,6 +41,7 @@ Allow: /kindle-clippings-cleaner
 Disallow: /review
 Disallow: /books
 Disallow: /book/
+Disallow: /articles
 Disallow: /highlights
 Disallow: /import
 Disallow: /read/
