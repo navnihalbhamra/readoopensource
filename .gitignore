@@ -43,3 +43,7 @@ next-env.d.ts
 # Environment variables (secrets stay local only)
 .env
 .env.*
+
+# Local vendor metadata
+.lovable/
+

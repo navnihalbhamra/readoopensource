@@ -96,7 +96,7 @@ export function renderDigestText(highlights: DigestHighlight[]): string {
 export type DigestSendResult = { sent: true } | { sent: false; reason: string };
 
 /**
- * Hand the digest to Lovable's managed email sender.
+ * Hand the digest to the transactional email sender.
  *
  * The template registry is scaffolded once an email sender domain is set up;
  * until then this reports `email_not_configured` instead of throwing, so the
